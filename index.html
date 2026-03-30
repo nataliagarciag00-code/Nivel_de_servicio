@@ -2,42 +2,60 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Settepi - Dashboard de Seguridad</title>
+    <title>Settepi - Nivel de Servicio</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-blue { width: 100%; padding: 12px; background: #004a99; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        :root { --azul: #004a99; --amarillo: #ffcc00; --gris: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--gris); display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         
-        #dashboard { display: none; width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .header { background: #004a99; color: white; padding: 15px; border-radius: 8px; border-bottom: 5px solid #ffcc00; margin-bottom: 20px; }
-        .admin-box { background: #fffde7; border: 1px solid #fbc02d; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 450px; text-align: center; }
+        .header { background: var(--azul); color: white; padding: 15px; border-radius: 8px; border-bottom: 5px solid var(--amarillo); margin-bottom: 20px; }
+        
+        /* Botones de Menú */
+        .menu-container { display: none; width: 100%; max-width: 500px; text-align: center; }
+        .btn-menu { width: 100%; padding: 20px; margin: 10px 0; font-size: 18px; font-weight: bold; cursor: pointer; border: none; border-radius: 10px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-update { background-color: var(--amarillo); color: #333; }
+        .btn-view { background-color: var(--azul); color: white; }
+        .btn-menu:hover { transform: scale(1.02); opacity: 0.9; }
+
+        /* Vistas */
+        .view { display: none; width: 95%; max-width: 900px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-save { background: #2e7d32; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-back { background: #666; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
 <div id="login-section" class="card">
-    <h2 style="color: #004a99;">Settepi Login</h2>
-    <input type="email" id="email" placeholder="Correo @settepi.com">
+    <div class="header"><h2>Settepi Logística</h2></div>
+    <input type="email" id="email" placeholder="Correo corporativo">
     <input type="password" id="pass" placeholder="Contraseña">
-    <button class="btn-blue" onclick="login()">Entrar al Dashboard</button>
+    <button class="btn-view" onclick="login()" style="width:100%; padding:12px; border-radius:8px; border:none; font-weight:bold; cursor:pointer;">Entrar</button>
     <p id="error" style="color: red; font-size: 13px;"></p>
 </div>
 
-<div id="dashboard">
-    <div class="header">
-        <h2 style="margin: 0;">Score de Seguridad - Los Cabos</h2>
-    </div>
+<div id="menu-principal" class="menu-container">
+    <div class="header"><h1>Nivel de Servicio</h1><p>Los Cabos, BCS</p></div>
+    <button id="btn-admin-panel" class="btn-menu btn-update" onclick="showView('vista-update')">📝 Actualizar Info</button>
+    <button class="btn-menu btn-view" onclick="showView('vista-dashboard')">📊 Ver Dashboard</button>
+    <button onclick="location.reload()" style="background:none; border:none; color:#666; cursor:pointer; margin-top:20px;">Cerrar Sesión</button>
+</div>
 
-    <div id="admin-panel" class="admin-box">
-        <h4 style="margin-top: 0;">Panel de Actualización</h4>
-        <input type="number" id="nuevo-score" placeholder="Nuevo Score (0-100)" style="width: 150px;">
-        <button onclick="guardarDato()" style="padding: 10px; background: #2e7d32; color: white; border: none; border-radius: 5px; cursor: pointer;">Guardar</button>
-    </div>
+<div id="vista-update" class="view">
+    <button class="btn-back" onclick="showView('menu-principal')">← Volver</button>
+    <h2>Actualizar Nivel de Servicio</h2>
+    <p>Introduce el porcentaje de cumplimiento semanal:</p>
+    <input type="number" id="input-nivel" placeholder="Ejemplo: 98">
+    <button class="btn-save" onclick="guardarNivel()">Guardar en Base de Datos</button>
+    <p id="msg-save"></p>
+</div>
 
-    <canvas id="graficaSeguridad"></canvas>
-    <div id="status" style="margin-top: 15px; font-weight: bold; text-align: center; padding: 10px; border-radius: 5px;"></div>
+<div id="vista-dashboard" class="view">
+    <button class="btn-back" onclick="showView('menu-principal')">← Volver</button>
+    <div class="header"><h2>Dashboard de Cumplimiento</h2></div>
+    <canvas id="chartNivel"></canvas>
+    <div id="status-label" style="text-align:center; margin-top:20px; font-weight:bold; padding:15px; border-radius:8px;"></div>
 </div>
 
 <script type="module">
@@ -45,7 +63,6 @@
     import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // TUS LLAVES ACTUALIZADAS
     const firebaseConfig = {
         apiKey: "AIzaSyC76690rc5SKbN0kFFOOLsa-ua21VJ-8dI",
         authDomain: "nsusuarios.firebaseapp.com",
@@ -59,6 +76,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     let chart;
+    let userEmail = "";
 
     window.login = function() {
         const email = document.getElementById('email').value;
@@ -66,56 +84,63 @@
 
         signInWithEmailAndPassword(auth, email, password)
             .then((user) => {
+                userEmail = email;
                 document.getElementById('login-section').style.display = 'none';
-                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('menu-principal').style.display = 'block';
                 
-                // Si eres tú, mostramos el panel para escribir el score
-                if(email === "n.garcia@settepi.com") {
-                    document.getElementById('admin-panel').style.display = 'block';
+                // CONTROL DE ROLES: Solo n.garcia ve el botón de actualizar
+                if(email !== "n.garcia@settepi.com") {
+                    document.getElementById('btn-admin-panel').style.display = 'none';
                 }
                 initChart();
             })
-            .catch(() => { document.getElementById('error').innerText = "Acceso denegado."; });
+            .catch(() => { document.getElementById('error').innerText = "Usuario o contraseña incorrectos."; });
     };
 
-    window.guardarDato = async function() {
-        const val = document.getElementById('nuevo-score').value;
+    window.showView = function(viewId) {
+        document.querySelectorAll('.view, .menu-container').forEach(v => v.style.display = 'none');
+        document.getElementById(viewId).style.display = 'block';
+    };
+
+    window.guardarNivel = async function() {
+        const val = document.getElementById('input-nivel').value;
         if(val) {
-            await setDoc(doc(db, "seguridad", "semana_actual"), { score: Number(val) });
-            alert("¡Score actualizado exitosamente!");
+            await setDoc(doc(db, "logistica", "nivel_servicio"), { 
+                porcentaje: Number(val),
+                fecha: new Date().toLocaleDateString()
+            });
+            document.getElementById('msg-save').innerText = "✅ Datos actualizados correctamente";
+            setTimeout(() => document.getElementById('msg-save').innerText = "", 3000);
         }
     };
 
     function initChart() {
-        const ctx = document.getElementById('graficaSeguridad').getContext('2d');
+        const ctx = document.getElementById('chartNivel').getContext('2d');
         chart = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: ['Score Semanal'],
-                datasets: [{ label: 'Puntos', data: [0], backgroundColor: '#004a99' }]
+                labels: ['Nivel de Servicio Semanal'],
+                datasets: [{ label: '% Cumplimiento', data: [0], backgroundColor: '#004a99' }]
             },
             options: { scales: { y: { beginAtZero: true, max: 100 } } }
         });
 
-        // ESCUCHA EN TIEMPO REAL DESDE FIRESTORE
-        onSnapshot(doc(db, "seguridad", "semana_actual"), (snap) => {
+        onSnapshot(doc(db, "logistica", "nivel_servicio"), (snap) => {
             if(snap.exists()) {
-                const score = snap.data().score;
-                chart.data.datasets[0].data = [score];
+                const perc = snap.data().porcentaje;
+                chart.data.datasets[0].data = [perc];
                 
-                const statusDiv = document.getElementById('status');
-                if(score >= 93) {
+                const label = document.getElementById('status-label');
+                if(perc >= 95) {
                     chart.data.datasets[0].backgroundColor = '#2e7d32';
-                    statusDiv.innerText = "ESTADO: BUENO";
-                    statusDiv.style.background = "#c8e6c9";
-                } else if(score <= 86) {
-                    chart.data.datasets[0].backgroundColor = '#d32f2f';
-                    statusDiv.innerText = "ESTADO: CRÍTICO";
-                    statusDiv.style.background = "#ffcdd2";
+                    label.innerText = "ESTADO: OBJETIVO ALCANZADO";
+                    label.style.background = "#c8e6c9";
+                    label.style.color = "#1b5e20";
                 } else {
-                    chart.data.datasets[0].backgroundColor = '#fbc02d';
-                    statusDiv.innerText = "ESTADO: REGULAR";
-                    statusDiv.style.background = "#fff9c4";
+                    chart.data.datasets[0].backgroundColor = '#ffcc00';
+                    label.innerText = "ESTADO: BAJO REVISIÓN";
+                    label.style.background = "#fff9c4";
+                    label.style.color = "#f57f17";
                 }
                 chart.update();
             }
