@@ -2,41 +2,48 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Settepi BI - Control Operativo</title>
+    <title>Settepi BI - Advanced Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --azul: #004a99; --verde-ok: #4caf50; --rojo: #d32f2f; --amarillo: #ffcc00; --fondo: #f4f7f9; }
+        :root { --azul: #004a99; --verde: #4caf50; --rojo: #d32f2f; --amarillo: #ffcc00; --fondo: #f4f7f9; --gris: #666; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: #333; }
         
-        /* Vista de Login */
-        #login-view { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--azul); z-index: 9999; }
+        #login-view { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; align-items: center; justify-content: center; background: var(--azul); z-index: 10000; }
         .login-card { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         
-        /* Dashboard */
-        #dashboard-view { display: none; }
         .topbar { background: var(--azul); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--amarillo); }
-        .filters { background: white; padding: 15px 30px; display: flex; gap: 15px; border-bottom: 1px solid #ddd; }
+        .filters { background: white; padding: 15px 30px; display: flex; gap: 15px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; }
         
-        #progress-container { display: none; background: #eee; height: 20px; width: 95%; margin: 10px auto; border-radius: 10px; overflow: hidden; }
-        #progress-bar { background: var(--verde-ok); height: 100%; width: 0%; transition: width 0.1s; color: white; text-align: center; font-size: 12px; line-height: 20px; }
+        #progress-container { display: none; background: #eee; height: 12px; width: 100%; position: sticky; top: 0; z-index: 100; }
+        #progress-bar { background: var(--verde); height: 100%; width: 0%; transition: width 0.3s; }
 
-        .container { padding: 25px; max-width: 1500px; margin: auto; }
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid var(--verde-ok); }
-        .kpi-card h2 { font-size: 34px; margin: 10px 0; color: var(--azul); }
-        .kpi-card span { font-size: 13px; color: #666; font-weight: bold; text-transform: uppercase; }
+        .container { padding: 20px; max-width: 1600px; margin: auto; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid var(--azul); }
+        .kpi-card h2 { font-size: 28px; margin: 8px 0; color: var(--azul); }
+        .kpi-card span { font-size: 11px; color: var(--gris); font-weight: bold; text-transform: uppercase; }
+        .sub-kpi { font-size: 12px; color: var(--gris); margin-top: 5px; display: block; border-top: 1px solid #eee; padding-top: 5px; }
 
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .chart-box { background: white; padding: 20px; border-radius: 8px; height: 380px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-
-        .table-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid var(--amarillo); color: var(--azul); }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .section-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+        th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid var(--amarillo); color: var(--azul); }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        
+        .up { background: #e8f5e9; color: #2e7d32; font-weight: bold; }
+        .down { background: #ffebee; color: #c62828; font-weight: bold; }
+        
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-xl { background: var(--amarillo); color: #333; }
+        .btn-dl { background: var(--azul); color: white; margin-top: 10px; font-size: 11px; }
         .oculto { display: none !important; }
+
+        .switch-container { display: flex; background: #eee; border-radius: 20px; padding: 4px; }
+        .switch-btn { padding: 6px 15px; border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .switch-active { background: var(--azul); color: white; }
     </style>
 </head>
 <body>
@@ -47,59 +54,82 @@
         <input type="email" id="email" placeholder="Correo" value="n.garcia@settepi.com">
         <input type="password" id="pass" placeholder="Contraseña">
         <button class="btn" style="background:var(--azul); color:white; width:100%" onclick="iniciarSesion()">Entrar</button>
-        <p id="login-msg" style="color:red; font-size:12px; margin-top:10px;"></p>
+        <p id="login-msg" style="color:red; font-size:11px; margin-top:10px;"></p>
     </div>
 </div>
 
-<div id="dashboard-view">
+<div id="dashboard-view" class="oculto">
+    <div id="progress-container"><div id="progress-bar"></div></div>
     <div class="topbar">
-        <h2 style="margin:0;">Control de Nivel de Servicio</h2>
+        <h2 style="margin:0;">Dashboard de Nivel de Servicio</h2>
         <div>
-            <button class="btn" style="background:var(--amarillo);" onclick="document.getElementById('xlInput').click()">📂 Cargar Datos (Excel)</button>
-            <input type="file" id="xlInput" class="oculto">
+            <button class="btn btn-xl" onclick="document.getElementById('xlInput').click()">📂 Subir Excel</button>
+            <input type="file" id="xlInput" class="oculto" accept=".xlsx, .xls">
             <button class="btn" style="background:rgba(255,255,255,0.2); color:white; margin-left:10px;" onclick="cerrarSesion()">Salir</button>
         </div>
     </div>
 
     <div class="filters">
+        <div class="switch-container">
+            <div id="sw-week" class="switch-btn switch-active" onclick="togglePeriod('sem')">Semana</div>
+            <div id="sw-month" class="switch-btn" onclick="togglePeriod('mes')">Mes</div>
+        </div>
+        <select id="sel-bu" onchange="procesarYRenderizar()"><option value="ALL">Business Unit</option></select>
+        <select id="sel-grp" onchange="procesarYRenderizar()"><option value="ALL">Group / Cliente</option></select>
         <select id="sel-criterio" onchange="procesarYRenderizar()">
-            <option value="4">Criterio CORP (4 min)</option>
-            <option value="0">Criterio Estrictos (0 min)</option>
+            <option value="4">Criterio 4 Min</option>
+            <option value="0">Criterio 0 Min</option>
         </select>
-        <select id="sel-sem" onchange="procesarYRenderizar()"></select>
-        <select id="sel-cliente" onchange="procesarYRenderizar()"></select>
     </div>
-
-    <div id="progress-container"><div id="progress-bar">0%</div></div>
 
     <div class="container">
         <div class="kpi-row">
             <div class="kpi-card"><span>Nivel de Servicio</span><h2 id="k-ns">0%</h2></div>
+            <div class="kpi-card"><span>Total Servicios</span><h2 id="k-viajes">0</h2><span class="sub-kpi" id="k-info">0 Sin Info</span></div>
+            <div class="kpi-card" style="border-top-color:var(--rojo)">
+                <span>Total Retrasos</span><h2 id="k-tarde">0</h2>
+                <div class="sub-kpi">
+                    <span id="k-t-it" style="color:var(--rojo)">0 Inicio Tarde</span> | 
+                    <span id="k-t-pt" style="color:var(--azul)">0 Inicio OK</span>
+                </div>
+            </div>
             <div class="kpi-card"><span>Inicios a Tiempo</span><h2 id="k-init">0%</h2></div>
-            <div class="kpi-card"><span>Viajes Evaluados</span><h2 id="k-viajes">0</h2></div>
-            <div class="kpi-card" style="border-top-color:var(--rojo)"><span>Retrasos Críticos</span><h2 id="k-tarde">0</h2></div>
         </div>
 
-        <div class="charts-grid">
-            <div class="chart-box"><h4>Tendencia de Cumplimiento</h4><canvas id="chartTrend"></canvas></div>
-            <div class="chart-box"><h4>Distribución de Puntualidad</h4><canvas id="chartPie"></canvas></div>
+        <div class="section-box" style="margin-bottom:25px;">
+            <h4>Tendencia General de Cumplimiento (%)</h4>
+            <div style="height:300px;"><canvas id="chartGeneral"></canvas></div>
         </div>
 
-        <div class="table-box">
-            <h3 style="color:var(--rojo); margin-top:0;">Detalle de Desviaciones</h3>
-            <table id="tabla-retrasos">
-                <thead>
-                    <tr>
-                        <th>Ruta</th>
-                        <th>Semana</th>
-                        <th>Cliente / UDN</th>
-                        <th>Operador</th>
-                        <th>Retraso</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <div class="section-box">
+            <h4>Análisis Comparativo por Cliente (NS %)</h4>
+            <div style="overflow-x:auto;"><table id="tab-clientes"><thead><tr id="head-clientes"></tr></thead><tbody></tbody></table></div>
+            <div style="height:250px;"><canvas id="chartClientes"></canvas></div>
+        </div>
+
+        <div class="grid-2">
+            <div class="section-box">
+                <h4>NS por Ruta</h4>
+                <div style="overflow-y:auto; max-height:400px;"><table id="tab-rutas"><thead><tr id="head-rutas"></tr></thead><tbody></tbody></table></div>
+            </div>
+            <div class="section-box">
+                <h4>Ranking Operadores (Inicio Tarde)</h4>
+                <div style="overflow-y:auto; max-height:400px;"><table id="tab-operadores"><thead><tr><th>Operador</th><th>Total Tarde</th><th>Acción</th></tr></thead><tbody></tbody></table></div>
+                <button class="btn btn-dl" onclick="descargarDetalle('operadores')">Descargar Detalle Operadores</button>
+            </div>
+        </div>
+
+        <div class="section-box">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4>Detalle de Llegadas Tarde</h4>
+                <button class="btn btn-dl" onclick="descargarDetalle('retrasos')">Descargar Excel Detalle</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table id="tab-detalle">
+                    <thead><tr><th>Group</th><th>Ruta (DES)</th><th>Clasificación</th><th>Sem/Mes</th><th>Min. Retraso</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
@@ -107,7 +137,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyC76690rc5SKbN0kFFOOLsa-ua21VJ-8dI", 
@@ -123,149 +153,217 @@
     const db = getFirestore(app);
     let masterData = [];
     let charts = {};
+    let currentPeriod = 'sem';
 
     // Manejo de Sesión
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            document.getElementById('login-view').classList.add('oculto');
-            document.getElementById('dashboard-view').style.display = 'block';
-            cargarDesdeFirebase();
-        } else {
-            document.getElementById('login-view').classList.remove('oculto');
-            document.getElementById('dashboard-view').style.display = 'none';
-        }
+    onAuthStateChanged(auth, user => {
+        if(user) { document.getElementById('login-view').classList.add('oculto'); document.getElementById('dashboard-view').classList.remove('oculto'); cargarDatos(); }
+        else { document.getElementById('login-view').classList.remove('oculto'); document.getElementById('dashboard-view').classList.add('oculto'); }
     });
 
     window.iniciarSesion = async () => {
         const u = document.getElementById('email').value, p = document.getElementById('pass').value;
-        try {
-            await signInWithEmailAndPassword(auth, u, p);
-        } catch (e) {
-            document.getElementById('login-msg').innerText = "Acceso denegado. Verifique su contraseña.";
-        }
+        try { await signInWithEmailAndPassword(auth, u, p); } catch(e) { document.getElementById('login-msg').innerText = "Error de acceso"; }
     };
-
     window.cerrarSesion = () => signOut(auth);
 
-    // Carga de datos
-    async function cargarDesdeFirebase() {
+    window.togglePeriod = (p) => {
+        currentPeriod = p;
+        document.getElementById('sw-week').classList.toggle('switch-active', p==='sem');
+        document.getElementById('sw-month').classList.toggle('switch-active', p==='mes');
+        procesarYRenderizar();
+    };
+
+    async function cargarDatos() {
         const snap = await getDocs(collection(db, "servicios_settepi"));
-        masterData = [];
-        snap.forEach(d => masterData.push(d.data()));
-        actualizarSelectores();
+        masterData = []; snap.forEach(d => masterData.push(d.data()));
+        llenarSelectores();
         procesarYRenderizar();
     }
 
-    function actualizarSelectores() {
-        const sems = [...new Set(masterData.map(d=>d.sem))].sort((a,b)=>a-b);
-        document.getElementById('sel-sem').innerHTML = '<option value="ALL">Todas las Semanas</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
-        const clis = [...new Set(masterData.map(d=>d.grp))].sort();
-        document.getElementById('sel-cliente').innerHTML = '<option value="ALL">Todos los Clientes</option>' + clis.map(c=>`<option value="${c}">${c}</option>`).join('');
+    function llenarSelectores() {
+        const bus = [...new Set(masterData.map(d=>d.bu))].sort();
+        document.getElementById('sel-bu').innerHTML = '<option value="ALL">Business Unit</option>' + bus.map(b=>`<option value="${b}">${b}</option>`).join('');
+        const grps = [...new Set(masterData.map(d=>d.grp))].sort();
+        document.getElementById('sel-grp').innerHTML = '<option value="ALL">Group / Cliente</option>' + grps.map(g=>`<option value="${g}">${g}</option>`).join('');
     }
 
-    // Procesamiento Dinámico (Criterio 0 y 4 min)
     window.procesarYRenderizar = () => {
+        const bu = document.getElementById('sel-bu').value;
+        const grp = document.getElementById('sel-grp').value;
         const crit = parseInt(document.getElementById('sel-criterio').value);
-        const fSem = document.getElementById('sel-sem').value;
-        const fCli = document.getElementById('sel-cliente').value;
 
-        const data = masterData.filter(d => (fSem === 'ALL' || String(d.sem) === fSem) && (fCli === 'ALL' || d.grp === fCli));
+        const data = masterData.filter(d => (bu === 'ALL' || d.bu === bu) && (grp === 'ALL' || d.grp === grp));
         
+        // 1. Totales y KPIs
         const total = data.length || 1;
-        const tardeCount = data.filter(d => d.latL > crit).length;
-        const initOk = data.filter(d => d.latI <= 0).length;
+        const sinInfo = data.filter(d => d.noInfo).length;
+        const tarde = data.filter(d => d.latL > crit);
+        const tardeIT = tarde.filter(d => d.latI > 0).length; // Inicio Tarde
+        const tardePT = tarde.filter(d => d.latI <= 0).length; // Inicio OK pero llegó tarde
+        const initOk = data.filter(d => !d.noInfo && d.latI <= 0).length;
 
-        document.getElementById('k-ns').innerText = ((1 - tardeCount/total)*100).toFixed(1) + '%';
+        document.getElementById('k-ns').innerText = ((1 - tarde.length/total)*100).toFixed(1) + '%';
+        document.getElementById('k-viajes').innerText = total;
+        document.getElementById('k-info').innerText = `${sinInfo} Sin Info`;
+        document.getElementById('k-tarde').innerText = tarde.length;
+        document.getElementById('k-t-it').innerText = `${tardeIT} Inicio Tarde`;
+        document.getElementById('k-t-pt').innerText = `${tardePT} Inicio OK`;
         document.getElementById('k-init').innerText = ((initOk/total)*100).toFixed(1) + '%';
-        document.getElementById('k-viajes').innerText = data.length;
-        document.getElementById('k-tarde').innerText = tardeCount;
 
-        renderGraficas(data, crit, tardeCount);
-        renderTabla(data, crit);
+        renderTendenciaGeneral(data, crit);
+        renderTablaComparativa(data, 'grp', 'tab-clientes', 'head-clientes', crit);
+        renderTablaComparativa(data, 'des', 'tab-rutas', 'head-rutas', crit);
+        renderRankingOperadores(data);
+        renderDetalleTarde(tarde);
     };
 
-    function renderGraficas(data, crit, tardeCount) {
-        const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
-        
-        if(charts.trend) charts.trend.destroy();
-        charts.trend = new Chart(document.getElementById('chartTrend'), {
-            type: 'line',
-            data: {
-                labels: sems.map(s=>'S'+s),
-                datasets: [{ 
-                    label: '% Cumplimiento', 
-                    data: sems.map(s=>{ 
-                        const d = data.filter(x=>x.sem===s); 
-                        return ((1 - d.filter(x=>x.latL > crit).length / d.length) * 100).toFixed(1);
-                    }), 
-                    borderColor: '#4caf50', fill: true, tension: 0.3 
-                }]
-            },
-            options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+    function renderTendenciaGeneral(data, crit) {
+        const periodos = [...new Set(data.map(d => d[currentPeriod]))].sort((a,b)=>a-b);
+        const stats = periodos.map(p => {
+            const d = data.filter(x => x[currentPeriod] === p);
+            const total = d.length;
+            return {
+                ok: ((d.filter(x => x.latL <= crit && x.latI <= 0).length / total) * 100).toFixed(1),
+                initTarde: ((d.filter(x => x.latI > 0).length / total) * 100).toFixed(1),
+                okConRetraso: ((d.filter(x => x.latL > crit && x.latI <= 0).length / total) * 100).toFixed(1),
+                noInfo: ((d.filter(x => x.noInfo).length / total) * 100).toFixed(1)
+            };
         });
-        
-        if(charts.pie) charts.pie.destroy();
-        charts.pie = new Chart(document.getElementById('chartPie'), {
-            type: 'doughnut',
-            data: { 
-                labels: ['A Tiempo', 'Retraso'], 
-                datasets: [{ 
-                    data: [data.length - tardeCount, tardeCount], 
-                    backgroundColor: ['#4caf50', '#d32f2f'] 
-                }] 
+
+        if(charts.gen) charts.gen.destroy();
+        charts.gen = new Chart(document.getElementById('chartGeneral'), {
+            type: 'bar',
+            data: {
+                labels: periodos.map(p => (currentPeriod === 'sem' ? 'Sem ' : 'Mes ') + p),
+                datasets: [
+                    { label: '% En Tiempo', data: stats.map(s=>s.ok), backgroundColor: '#4caf50' },
+                    { label: '% Inicio Tarde', data: stats.map(s=>s.initTarde), backgroundColor: '#ff9800' },
+                    { label: '% Inicio OK / Llega Tarde', data: stats.map(s=>s.okConRetraso), backgroundColor: '#f44336' },
+                    { label: '% Sin Info', data: stats.map(s=>s.noInfo), backgroundColor: '#9e9e9e' }
+                ]
             },
-            options: { maintainAspectRatio: false }
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, max: 100 } } }
         });
     }
 
-    function renderTabla(data, crit) {
-        const tbody = document.querySelector('#tabla-retrasos tbody');
-        tbody.innerHTML = data.filter(d => d.latL > crit).map(f => `
+    function renderTablaComparativa(data, key, tableId, headId, crit) {
+        const periodos = [...new Set(data.map(d => d[currentPeriod]))].sort((a,b)=>a-b);
+        const items = [...new Set(data.map(d => d[key]))].sort();
+        
+        document.getElementById(headId).innerHTML = `<th>${key.toUpperCase()}</th>` + periodos.map(p => `<th>${currentPeriod=='sem'?'S':'M'}${p}</th>`).join('');
+        
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        tbody.innerHTML = items.map(item => {
+            let prevNS = null;
+            const cells = periodos.map(p => {
+                const d = data.filter(x => x[key] === item && x[currentPeriod] === p);
+                if(d.length === 0) return '<td>-</td>';
+                const ns = (1 - d.filter(x => x.latL > crit).length / d.length) * 100;
+                let cls = '';
+                if(prevNS !== null) cls = ns > prevNS ? 'up' : (ns < prevNS ? 'down' : '');
+                prevNS = ns;
+                return `<td class="${cls}">${ns.toFixed(1)}%</td>`;
+            }).join('');
+            return `<tr><td><b>${item}</b></td>${cells}</tr>`;
+        }).join('');
+    }
+
+    function renderRankingOperadores(data) {
+        const ops = {};
+        data.filter(d => d.latI > 0).forEach(d => {
+            ops[d.operador] = (ops[d.operador] || 0) + 1;
+        });
+        const sorted = Object.entries(ops).sort((a,b) => b[1] - a[1]).slice(0, 10);
+        document.querySelector('#tab-operadores tbody').innerHTML = sorted.map(o => `
+            <tr><td>${o[0]}</td><td><b>${o[1]}</b></td><td><button class="btn" style="padding:2px 8px; font-size:10px; background:#eee;" onclick="verDetalleOp('${o[0]}')">Ver</button></td></tr>
+        `).join('');
+    }
+
+    function renderDetalleTarde(tarde) {
+        document.querySelector('#tab-detalle tbody').innerHTML = tarde.slice(0, 50).map(d => `
             <tr>
-                <td><b>${f.des}</b></td>
-                <td>Sem ${f.sem}</td>
-                <td>${f.grp}</td>
-                <td>${f.operador}</td>
-                <td style="color:red; font-weight:bold;">${f.latL} min</td>
-                <td><span style="color:red">RETRASO</span></td>
+                <td>${d.grp}</td>
+                <td>${d.des}</td>
+                <td style="color:${d.latI>0?'var(--rojo)':'var(--azul)'}">${d.latI>0?'Inicio Tarde':'Trayecto/Tráfico'}</td>
+                <td>${currentPeriod=='sem'?'S':'M'}${d[currentPeriod]}</td>
+                <td>${d.latL} min</td>
             </tr>
         `).join('');
     }
 
-    // Carga de Excel Universal
-    document.getElementById('xlInput').addEventListener('change', (e) => {
+    // Lógica de Carga Excel con Barra de Progreso real
+    document.getElementById('xlInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
         const reader = new FileReader();
         reader.onload = async (evt) => {
             const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
             const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            const pBar = document.getElementById('progress-bar');
             document.getElementById('progress-container').style.display = 'block';
 
+            let batch = writeBatch(db);
             for (let i = 0; i < json.length; i++) {
-                const row = json[i];
-                const sem = row['Sem Via'] || row['Semana'] || row['sem'];
-                const des = row['des'] || row['Ruta'];
+                const r = json[i];
+                const sem = r['Sem Via'] || r['Semana'];
+                const mes = r['Mes'] || (r['start_date'] ? r['start_date'].split('/')[1] : '1');
                 
-                if (sem && des) {
-                    const toM = (v) => { 
-                        if(typeof v === 'number') return v*1440; 
-                        const p=String(v||"0:0").split(':'); 
-                        return parseInt(p[0])*60 + parseInt(p[1]||0); 
-                    };
-                    const latL = Math.max(0, Math.round(toM(row['end_eta']) - toM(row['end_time'])));
-                    const latI = Math.max(0, Math.round(toM(row['start_eta']) - toM(row['start_time'])));
-                    
-                    await setDoc(doc(db, "servicios_settepi", `${sem}-${des}-${i}`), {
-                        sem, des, latL, latI,
-                        grp: row['group'] || row['Cliente'] || row['UDN'] || "General",
-                        operador: row['oper_name'] || row['Operador'] || "N/A"
-                    });
+                // Lógica Sin Info
+                const noInfo = (!r['end_eta'] || r['end_status'] !== 'done');
+                
+                const toM = (v) => { 
+                    if(!v) return 0;
+                    if(typeof v === 'number') return v * 1440;
+                    const p = String(v).split(':'); 
+                    return parseInt(p[0])*60 + parseInt(p[1]||0); 
+                };
+
+                const latL = noInfo ? 999 : Math.max(0, Math.round(toM(r['end_eta']) - toM(r['end_time'])));
+                const latI = noInfo ? 0 : Math.max(0, Math.round(toM(r['start_eta']) - toM(r['start_time'])));
+
+                const docData = {
+                    id: r['id'] || i,
+                    bu: r['business_unit'] || 'General',
+                    grp: r['group'] || r['Cliente'] || 'N/A',
+                    des: r['des'] || 'Ruta S/N',
+                    car: r['car'] || 'N/A',
+                    operador: r['oper_name'] || 'S/N',
+                    sem: parseInt(sem),
+                    mes: parseInt(mes),
+                    latL, latI, noInfo,
+                    end_date: r['end_date'] || '',
+                    end_time: r['end_time'] || '',
+                    end_eta: r['end_eta'] || ''
+                };
+
+                batch.set(doc(db, "servicios_settepi", `ID-${docData.id}-${i}`), docData);
+                
+                if (i % 400 === 0 || i === json.length - 1) {
+                    await batch.commit();
+                    batch = writeBatch(db);
+                    pBar.style.width = ((i / json.length) * 100) + '%';
                 }
-                document.getElementById('progress-bar').style.width = ((i/json.length)*100) + '%';
             }
+            alert("Carga completada");
             location.reload();
         };
-        reader.readAsArrayBuffer(e.target.files[0]);
+        reader.readAsArrayBuffer(file);
     });
+
+    window.descargarDetalle = (tipo) => {
+        let exportData = [];
+        if(tipo === 'retrasos') {
+            exportData = masterData.filter(d => d.latL > 4).map(d => ({
+                ID: d.id, Unidad: d.bu, Cliente: d.grp, Ruta: d.des, Eco: d.car, 
+                Fecha: d.end_date, "Hora Plan": d.end_time, "Hora Real": d.end_eta,
+                Retraso: d.latL, Causa: d.latI > 0 ? 'Inicio Tarde' : 'Trayecto'
+            }));
+        }
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Detalle");
+        XLSX.writeFile(wb, `Detalle_${tipo}.xlsx`);
+    };
 </script>
 </body>
 </html>
