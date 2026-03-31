@@ -2,71 +2,83 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Settepi BI - Auditoría de Nivel de Servicio</title>
+    <title>Settepi BI - Dashboard de Nivel de Servicio</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --azul: #004a99; --amarillo: #ffcc00; --fondo: #f4f7f9; --blanco: #ffffff; --rojo: #d32f2f; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: #333; }
+        :root { --azul: #1a3a5a; --verde-ok: #4caf50; --rojo: #d32f2f; --fondo: #f8f9fa; --texto: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: var(--texto); }
         
-        .topbar { background: var(--azul); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--amarillo); }
-        .filter-bar { background: var(--blanco); padding: 15px 30px; display: flex; gap: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .main-content { padding: 25px; max-width: 1600px; margin: auto; }
-
-        /* Tarjetas de Récord Estilo "Executive" */
-        .records-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
-        .record-card { background: white; padding: 20px; border-radius: 12px; text-align: center; border-top: 4px solid var(--azul); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .record-card span { font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
-        .record-card h2 { margin: 10px 0 5px; font-size: 36px; color: var(--azul); }
-
-        .chart-box { background: white; padding: 30px; border-radius: 12px; height: 420px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .header { background: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e0e0e0; }
+        .btn-upload { background: #ffcc00; color: #000; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        .table-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .filters { background: white; padding: 10px 40px; display: flex; gap: 15px; border-bottom: 2px solid #eee; }
+        select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; min-width: 150px; }
+
+        .container { padding: 30px; max-width: 1500px; margin: auto; }
+        
+        /* KPI Cards Estilo Foto */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .kpi-card h2 { font-size: 38px; margin: 10px 0; color: var(--azul); }
+        .kpi-card span { font-size: 14px; color: #777; font-weight: bold; }
+
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 400px; }
+
+        /* Tabla de Auditoría */
+        .table-box { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th { background: #f8f9fa; color: var(--azul); padding: 12px; text-align: left; border-bottom: 3px solid var(--amarillo); }
-        td { padding: 12px; border-bottom: 1px solid #eee; }
-        
-        .badge-error { background: #fee2e2; color: var(--rojo); padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; background: var(--amarillo); color: #000; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: var(--azul); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #f5f5f5; }
+        .txt-retraso { color: var(--rojo); font-weight: bold; }
         .oculto { display: none; }
     </style>
 </head>
 <body>
 
-<div class="topbar">
-    <h2 style="margin:0;">Control de Nivel de Servicio - Auditoría Semanal</h2>
-    <button class="btn" onclick="document.getElementById('fileInput').click()">📂 Cargar Información (Excel)</button>
-    <input type="file" id="fileInput" class="oculto">
+<div class="header">
+    <h1 style="margin:0; font-size: 22px;">Métricas Operativas: Nivel de Servicio</h1>
+    <button class="btn-upload" onclick="document.getElementById('xlInput').click()">📥 Cargar Datos (Excel)</button>
+    <input type="file" id="xlInput" class="oculto">
 </div>
 
-<div class="filter-bar">
-    <select id="f-criterio" onchange="renderAll()"><option value="4">Criterio CORP (4 min)</option><option value="0">Criterio Cliente (0 min)</option></select>
-    <select id="f-semana" onchange="cambiarFiltro('sem', this.value)"></select>
-    <select id="f-grupo" onchange="cambiarFiltro('grp', this.value)"></select>
+<div class="filters">
+    <select id="sel-criterio" onchange="actualizarTodo()"><option value="4">Criterio 4 Minutos</option><option value="0">Criterio 0 Minutos</option></select>
+    <select id="sel-sem" onchange="actualizarTodo()"></select>
+    <select id="sel-cliente" onchange="actualizarTodo()"></select>
 </div>
 
-<div class="main-content">
-    <div class="records-row">
-        <div class="record-card"><span>Mejor NS Registrado</span><h2 id="rec-max">0%</h2><small id="rec-max-txt">---</small></div>
-        <div class="record-card"><span>Peor NS Registrado</span><h2 id="rec-min">0%</h2><small id="rec-min-txt">---</small></div>
-        <div class="record-card"><span>NS Promedio</span><h2 id="rec-avg">0%</h2><small>Semanas 11-13</small></div>
+<div class="container">
+    <div class="kpi-grid">
+        <div class="kpi-card"><span>Nivel de Servicio</span><h2 id="kpi-ns">0%</h2><small>Meta: 95%</small></div>
+        <div class="kpi-card"><span>Inicios en Tiempo</span><h2 id="kpi-init">0%</h2><small id="max-init">Max: --</small></div>
+        <div class="kpi-card"><span>Viajes Totales</span><h2 id="kpi-viajes">0</h2><small>S11 - S13</small></div>
+        <div class="kpi-card"><span>Retrasos Críticos</span><h2 id="kpi-fallas" style="color:var(--rojo)">0</h2><small>Fuera de tolerancia</small></div>
     </div>
 
-    <div class="chart-box">
-        <h4>Tendencia de Cumplimiento (Base 0%)</h4>
-        <canvas id="chartTrend"></canvas>
+    <div class="charts-grid">
+        <div class="chart-container">
+            <h3 style="margin-top:0;">Tendencia de Nivel de Servicio (%)</h3>
+            <canvas id="chartTrend"></canvas>
+        </div>
+        <div class="chart-container">
+            <h3 style="margin-top:0;">Distribución de Fallas</h3>
+            <canvas id="chartPie"></canvas>
+        </div>
     </div>
 
-    <div class="table-section">
-        <h3 style="color:var(--rojo);">Análisis de Rutas Críticas (Solo Retrasos)</h3>
-        <table id="tabla-fallas">
+    <div class="table-box">
+        <h3 style="color:var(--rojo); margin-top:0;">Auditoría de Retrasos por Ruta</h3>
+        <table id="tbl-retrasos">
             <thead>
                 <tr>
-                    <th>Ruta (DES)</th>
+                    <th>Ruta</th>
+                    <th>Cliente</th>
                     <th>Sem</th>
                     <th>Operador</th>
                     <th>Unidad</th>
-                    <th>Min. Tarde</th>
+                    <th>Min. Retraso</th>
                     <th>NS Ruta</th>
                 </tr>
             </thead>
@@ -83,68 +95,76 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let masterData = [];
+    let rawData = [];
     let charts = {};
-    let filters = { sem: 'ALL', grp: 'ALL' };
 
-    async function cargarDatos() {
+    async function descargarFirebase() {
         const snap = await getDocs(collection(db, "servicios_settepi"));
-        masterData = []; snap.forEach(d => masterData.push(d.data()));
-        actualizarSelectores();
-        renderAll();
+        rawData = []; snap.forEach(d => rawData.push(d.data()));
+        actualizarFiltrosUI();
+        actualizarTodo();
     }
 
-    function actualizarSelectores() {
-        const sems = [...new Set(masterData.map(d=>d.sem))].sort((a,b)=>a-b);
-        document.getElementById('f-semana').innerHTML = '<option value="ALL">Todas las Semanas</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
-        const grps = [...new Set(masterData.map(d=>d.grp))].sort();
-        document.getElementById('f-grupo').innerHTML = '<option value="ALL">Todos los Grupos</option>' + grps.map(g=>`<option value="${g}">${g}</option>`).join('');
+    function actualizarFiltrosUI() {
+        const sems = [...new Set(rawData.map(d=>d.sem))].sort((a,b)=>a-b);
+        document.getElementById('sel-sem').innerHTML = '<option value="ALL">Todas las Semanas</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
+        const clis = [...new Set(rawData.map(d=>d.grp))].sort();
+        document.getElementById('sel-cliente').innerHTML = '<option value="ALL">Todos los Clientes</option>' + clis.map(c=>`<option value="${c}">${c}</option>`).join('');
     }
 
-    window.cambiarFiltro = (t, v) => { filters[t] = v; renderAll(); };
+    window.actualizarTodo = () => {
+        const crit = parseInt(document.getElementById('sel-criterio').value);
+        const fSem = document.getElementById('sel-sem').value;
+        const fCli = document.getElementById('sel-cliente').value;
 
-    window.renderAll = () => {
-        const crit = parseInt(document.getElementById('f-criterio').value);
-        const data = masterData.filter(d => (filters.sem === 'ALL' || String(d.sem) === filters.sem) && (filters.grp === 'ALL' || d.grp === filters.grp));
+        const data = rawData.filter(d => (fSem === 'ALL' || String(d.sem) === fSem) && (fCli === 'ALL' || d.grp === fCli));
         
-        // Récords Históricos
-        const sems = [...new Set(masterData.map(d=>d.sem))];
-        let stats = sems.map(s => {
-            const d = masterData.filter(x => x.sem === s);
-            return { sem: s, ns: ((1 - d.filter(x => x.latL > crit).length / d.length) * 100) };
-        });
-        
-        if (stats.length > 0) {
-            const max = stats.reduce((p, c) => (p.ns > c.ns) ? p : c);
-            const min = stats.reduce((p, c) => (p.ns < c.ns) ? p : c);
-            document.getElementById('rec-max').innerText = max.ns.toFixed(1) + '%';
-            document.getElementById('rec-max-txt').innerText = 'Semana ' + max.sem;
-            document.getElementById('rec-min').innerText = min.ns.toFixed(1) + '%';
-            document.getElementById('rec-min-txt').innerText = 'Semana ' + min.sem;
-            document.getElementById('rec-avg').innerText = (stats.reduce((a,b)=>a+b.ns,0)/stats.length).toFixed(1) + '%';
-        }
+        // KPIs
+        const total = data.length || 1;
+        const tarde = data.filter(d => d.latL > crit).length;
+        const initOk = data.filter(d => d.latI <= 0).length;
 
-        renderTrend(data, crit);
-        renderTable(data, crit);
+        document.getElementById('kpi-ns').innerText = ((1 - tarde/total)*100).toFixed(1) + '%';
+        document.getElementById('kpi-init').innerText = ((initOk/total)*100).toFixed(1) + '%';
+        document.getElementById('kpi-viajes').innerText = data.length;
+        document.getElementById('kpi-fallas').innerText = tarde;
+
+        renderGraficas(data, crit);
+        renderTabla(data, crit);
     };
 
-    function renderTrend(data, crit) {
+    function renderGraficas(data, crit) {
         const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
+        
+        // Gráfica de Tendencia (Estilo Verde)
         if(charts.trend) charts.trend.destroy();
         charts.trend = new Chart(document.getElementById('chartTrend'), {
             type: 'line',
             data: {
                 labels: sems.map(s=>'Sem '+s),
-                datasets: [{ label: '% Nivel de Servicio', data: sems.map(s=>{ const d=data.filter(x=>x.sem===s); return ((1-d.filter(x=>x.latL>crit).length/d.length)*100).toFixed(1)}), borderColor: '#004a99', backgroundColor: 'rgba(0,74,153,0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ 
+                    label: '% NS', 
+                    data: sems.map(s=>{ const d=data.filter(x=>x.sem===s); return ((1-d.filter(x=>x.latL>crit).length/d.length)*100).toFixed(1)}),
+                    borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,0.1)', fill: true, tension: 0.4, pointRadius: 5
+                }]
             },
-            options: { 
-                scales: { y: { min: 0, max: 100, ticks: { stepSize: 10 } } },
-                layout: { padding: 20 }
-            }
+            options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+        });
+
+        // Pie de Distribución
+        if(charts.pie) charts.pie.destroy();
+        charts.pie = new Chart(document.getElementById('chartPie'), {
+            type: 'doughnut',
+            data: {
+                labels: ['A Tiempo', 'Retraso'],
+                datasets: [{ data: [data.length - data.filter(d=>d.latL>crit).length, data.filter(d=>d.latL>crit).length], backgroundColor: ['#4caf50', '#d32f2f'] }]
+            },
+            options: { maintainAspectRatio: false }
         });
     }
 
-    function renderTable(data, crit) {
+    function renderTabla(data, crit) {
+        // Agrupar por ruta para sacar NS por ruta
         const rMap = {};
         data.forEach(d => {
             if(!rMap[d.des]) rMap[d.des] = { v:0, r:0, fallas: [] };
@@ -153,66 +173,62 @@
         });
 
         const sorted = Object.entries(rMap).map(([des, i]) => ({ des, ...i, ns: (1 - i.r/i.v)*100 }))
-                        .sort((a,b) => a.ns - b.ns); // MENOR NS PRIMERO
+                        .sort((a,b) => a.ns - b.ns);
 
-        const tbody = document.querySelector('#tabla-fallas tbody');
+        const tbody = document.querySelector('#tbl-retrasos tbody');
         tbody.innerHTML = sorted.filter(r => r.r > 0).map(r => 
-            r.fallas.map(d => `
+            r.fallas.map(f => `
                 <tr>
                     <td><b>${r.des}</b></td>
-                    <td>${d.sem}</td>
-                    <td>${d.operador}</td>
-                    <td>${d.unidad}</td>
-                    <td><span class="badge-error">${d.latL} min</span></td>
+                    <td>${f.grp}</td>
+                    <td>${f.sem}</td>
+                    <td>${f.operador}</td>
+                    <td>${f.unidad}</td>
+                    <td class="txt-retraso">${f.latL} min</td>
                     <td><b style="color:red">${r.ns.toFixed(1)}%</b></td>
                 </tr>
             `).join('')
         ).join('');
     }
 
-    // --- CARGADOR DE EXCEL "SIN FILTROS" PARA ASEGURAR CARGA ---
-    document.getElementById('fileInput').addEventListener('change', function(e) {
+    // --- PROCESADOR DE EXCEL MEJORADO (SIN FILTROS DE STATUS) ---
+    document.getElementById('xlInput').addEventListener('change', (e) => {
         const reader = new FileReader();
         reader.onload = async (evt) => {
-            const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            
-            console.log("Columnas detectadas en tu Excel:", Object.keys(json[0]));
+            const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
             let count = 0;
 
             for (const row of json) {
-                // Filtro básico para asegurar que es un viaje de inicio (IN)
-                if (String(row['shift'] || "").toUpperCase() !== "IN") continue;
-
-                const toM = (v) => { 
-                    if(typeof v === 'number') return v*1440; 
-                    const p=String(v||"0:0").split(':'); 
-                    return parseInt(p[0])*60 + parseInt(p[1]||0); 
-                };
-
-                let sP = toM(row['start_time']), sR = toM(row['start_eta']), eP = toM(row['end_time']), eR = toM(row['end_eta']);
-                if (eR < sP) eR += 1440;
+                // Buscador de columnas por alias
+                const get = (keys) => { const k = keys.find(x => row[x] !== undefined); return k ? row[k] : null; };
                 
-                const idV = String(row['id'] || row['ID'] || Math.random());
+                const sem = get(['Sem Via', 'Semana', 'Week']);
+                const des = get(['des', 'Ruta', 'Description']);
+                const grp = get(['group', 'grp', 'Business Unit', 'Cliente']);
+                const id = get(['id', 'ID']) || Math.random();
 
-                await setDoc(doc(db, "servicios_settepi", idV), {
-                    id: idV,
-                    sem: row['Sem Via'] || row['Semana'] || 0,
-                    des: row['des'] || row['Ruta'] || "Sin Ruta",
-                    grp: row['group'] || row['grp'] || row['Business Unit'] || "Sin Grupo",
-                    unidad: row['unid_id'] || row['Unidad'] || "S/U",
-                    operador: row['oper_name'] || row['Operador'] || "S/O",
-                    latL: Math.max(0, Math.round(eR - eP))
+                if (!sem || !des) continue;
+
+                const toM = (v) => { if(typeof v === 'number') return v*1440; const p=String(v||"0:0").split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
+                const latL = Math.max(0, Math.round(toM(row['end_eta']) - toM(row['end_time'])));
+                const latI = Math.max(0, Math.round(toM(row['start_eta']) - toM(row['start_time'])));
+
+                await setDoc(doc(db, "servicios_settepi", String(id)), {
+                    id, sem, des, grp: grp || "S/G",
+                    operador: get(['oper_name', 'Operador']) || "S/O",
+                    unidad: get(['unid_id', 'Unidad']) || "S/U",
+                    latL, latI
                 });
                 count++;
             }
-            alert("Se procesaron " + count + " viajes. Refrescando...");
-            cargarDatos();
+            alert("Se sincronizaron " + count + " servicios. Actualizando tablero...");
+            descargarFirebase();
         };
         reader.readAsArrayBuffer(e.target.files[0]);
     });
 
-    cargarDatos(); // Carga inicial
+    descargarFirebase();
 </script>
 </body>
 </html>
