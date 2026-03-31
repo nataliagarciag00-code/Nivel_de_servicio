@@ -18,6 +18,12 @@
         #dashboard-view { display: none; }
         .topbar { background: var(--azul); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--amarillo); }
         .filters { background: white; padding: 15px 30px; display: flex; gap: 15px; border-bottom: 1px solid #ddd; }
+        
+        /* Barra de Progreso */
+        #progress-container { display: none; background: #eee; height: 22px; width: 95%; margin: 10px auto; border-radius: 11px; overflow: hidden; border: 1px solid #ddd; }
+        #progress-bar { background: var(--verde-ok); height: 100%; width: 0%; transition: width 0.2s; color: white; text-align: center; font-size: 12px; line-height: 22px; font-weight: bold; }
+        #progress-text { display: none; text-align: center; font-size: 13px; font-weight: bold; color: var(--azul); margin-bottom: 5px; }
+
         .container { padding: 25px; max-width: 1500px; margin: auto; }
 
         /* KPIs Estilo Ejecutivo */
@@ -65,10 +71,12 @@
         <select id="sel-sem" onchange="procesarYRenderizar()"></select>
         <select id="sel-cliente" onchange="procesarYRenderizar()"></select>
     </div>
-    <div id="progress-container" style="display:none; background: #eee; height: 20px; width: 100%;">
-    <div id="progress-bar" style="background: var(--verde-ok); height: 100%; width: 0%; transition: width 0.2s; color: white; text-align: center; font-size: 12px; line-height: 20px;">0%</div>
-</div>
-<div id="progress-text" style="display:none; text-align: center; font-size: 13px; margin-top: 5px; font-weight: bold;">Subiendo viajes...</div>
+
+    <div id="progress-text">Subiendo viajes a Firebase...</div>
+    <div id="progress-container">
+        <div id="progress-bar">0%</div>
+    </div>
+
     <div class="container">
         <div class="kpi-row">
             <div class="kpi-card"><span>Nivel de Servicio</span><h2 id="k-ns">0%</h2></div>
@@ -139,7 +147,7 @@
     };
     window.cerrarSesion = () => signOut(auth);
 
-    // --- DATOS ---
+    // --- CARGA DE DATOS ---
     async function cargarDesdeFirebase() {
         const snap = await getDocs(collection(db, "servicios_settepi"));
         masterData = []; snap.forEach(d => masterData.push(d.data()));
@@ -148,7 +156,7 @@
     }
 
     function actualizarSelectores() {
-        const sems = [...new Set(masterData.map(d=>d.sem))].sort();
+        const sems = [...new Set(masterData.map(d=>d.sem))].sort((a,b)=>a-b);
         document.getElementById('sel-sem').innerHTML = '<option value="ALL">Semanas (Todas)</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
         const clis = [...new Set(masterData.map(d=>d.grp))].sort();
         document.getElementById('sel-cliente').innerHTML = '<option value="ALL">Clientes (Todos)</option>' + clis.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -175,7 +183,8 @@
     };
 
     function renderGraficas(data, crit) {
-        const sems = [...new Set(data.map(d=>d.sem))].sort();
+        const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
+        
         if(charts.trend) charts.trend.destroy();
         charts.trend = new Chart(document.getElementById('chartTrend'), {
             type: 'line',
@@ -186,6 +195,7 @@
             options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
         });
         
+        const tarde = data.filter(d => d.latL > crit).length;
         if(charts.pie) charts.pie.destroy();
         charts.pie = new Chart(document.getElementById('chartPie'), {
             type: 'doughnut',
@@ -217,35 +227,62 @@
         ).join('');
     }
 
-    // --- SUBIR EXCEL (S13 - 294 VIAJES) ---
+    // --- LÓGICA DE SUBIDA CON BARRA DE PROGRESO ---
     document.getElementById('xlInput').addEventListener('change', (e) => {
         const reader = new FileReader();
+        const pContainer = document.getElementById('progress-container');
+        const pBar = document.getElementById('progress-bar');
+        const pText = document.getElementById('progress-text');
+
         reader.onload = async (evt) => {
             const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
             const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+            
+            const total = json.length;
             let count = 0;
+
+            pContainer.style.display = 'block';
+            pText.style.display = 'block';
 
             for (const row of json) {
                 const get = (keys) => { const k = keys.find(x => row[x] !== undefined); return k ? row[k] : null; };
-                const sem = get(['Sem Via', 'Semana', 'Week']);
-                const des = get(['des', 'Ruta', 'Description']);
-                const id = get(['id', 'ID']) || Math.random();
+                
+                // Mapeo flexible para evitar datos vacíos
+                const sem = get(['Sem Via', 'Semana', 'Week', 'sem']);
+                const des = get(['des', 'Ruta', 'Description', 'ruta']);
+                const id = get(['id', 'ID', 'Id']) || Math.random().toString(36).substr(2, 9);
 
-                if (!sem || !des) continue;
+                if (sem && des) {
+                    const toM = (v) => { 
+                        if(typeof v === 'number') return v*1440; 
+                        const p=String(v||"0:0").split(':'); 
+                        return parseInt(p[0])*60 + parseInt(p[1]||0); 
+                    };
+                    const latL = Math.max(0, Math.round(toM(row['end_eta']) - toM(row['end_time'])));
+                    const latI = Math.max(0, Math.round(toM(row['start_eta']) - toM(row['start_time'])));
 
-                const toM = (v) => { if(typeof v === 'number') return v*1440; const p=String(v||"0:0").split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
-                const latL = Math.max(0, Math.round(toM(row['end_eta']) - toM(row['end_time'])));
-                const latI = Math.max(0, Math.round(toM(row['start_eta']) - toM(row['start_time'])));
-
-                await setDoc(doc(db, "servicios_settepi", String(id)), {
-                    id, sem, des, latL, latI,
-                    grp: get(['group', 'grp', 'Cliente']) || "S/G",
-                    operador: get(['oper_name', 'Operador']) || "S/O",
-                    unidad: get(['unid_id', 'Unidad']) || "S/U"
-                });
+                    await setDoc(doc(db, "servicios_settepi", String(id)), {
+                        id, sem, des, latL, latI,
+                        grp: get(['group', 'grp', 'Cliente', 'Business Unit']) || "S/G",
+                        operador: get(['oper_name', 'Operador', 'Nombre']) || "S/O",
+                        unidad: get(['unid_id', 'Unidad', 'Economico']) || "S/U"
+                    });
+                }
+                
                 count++;
+                const porc = Math.round((count / total) * 100);
+                pBar.style.width = porc + '%';
+                pBar.innerText = porc + '%';
+                pText.innerText = `Sincronizando: ${count} de ${total} viajes...`;
             }
-            alert("Se cargaron " + count + " viajes correctamente.");
+
+            pText.innerText = "¡Sincronización Exitosa!";
+            setTimeout(() => {
+                pContainer.style.display = 'none';
+                pText.style.display = 'none';
+                pBar.style.width = '0%';
+            }, 3000);
+            
             cargarDesdeFirebase();
         };
         reader.readAsArrayBuffer(e.target.files[0]);
