@@ -2,124 +2,102 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Settepi BI - Control Maestro V3.2</title>
+    <title>Settepi BI - Dashboard Operativo</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --azul: #004a99; --amarillo: #ffcc00; --fondo: #f0f2f5; --blanco: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: #333; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--fondo); margin: 0; color: #333; }
 
-        /* --- CAPA DE LOGIN (OBLIGATORIA) --- */
-        #login-view { 
-            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            align-items: center; justify-content: center; 
-            background: linear-gradient(135deg, var(--azul) 0%, #002d5e 100%);
-            z-index: 9999; 
-        }
+        /* Vistas */
+        #login-view { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--azul) 0%, #002d5e 100%); z-index: 9999; }
         #dashboard-view { display: none; }
         .oculto { display: none !important; }
 
-        .login-card { background: var(--blanco); padding: 40px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 350px; text-align: center; }
-        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        
-        /* --- ESTRUCTURA DASHBOARD --- */
-        .topbar { background: var(--azul); color: white; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--amarillo); sticky; top: 0; z-index: 100; }
-        .filter-bar { background: var(--blanco); padding: 15px 30px; display: flex; gap: 20px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; }
-        .filter-group { display: flex; flex-direction: column; gap: 4px; }
-        .filter-group label { font-size: 10px; font-weight: bold; color: var(--azul); text-transform: uppercase; }
-        select { padding: 8px; border-radius: 6px; border: 1px solid #ccc; min-width: 140px; }
+        /* Estilos UI */
+        .topbar { background: var(--azul); color: white; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--amarillo); }
+        .filter-bar { background: var(--blanco); padding: 15px 30px; display: flex; gap: 20px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .main-content { padding: 20px 30px; max-width: 1600px; margin: auto; }
 
-        .main-content { padding: 20px 30px; max-width: 1800px; margin: auto; }
-        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .kpi-card { background: var(--blanco); padding: 15px; border-radius: 10px; text-align: center; border-bottom: 4px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .kpi-card h3 { margin: 5px 0 0; font-size: 24px; color: var(--azul); }
-        
-        .charts-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .chart-container { background: var(--blanco); padding: 15px; border-radius: 10px; height: 350px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        
-        .table-container { background: var(--blanco); padding: 20px; border-radius: 10px; margin-top: 20px; max-height: 450px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: var(--azul); color: white; padding: 12px; text-align: left; position: sticky; top: -20px; }
-        td { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        /* KPIs */
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: var(--blanco); padding: 20px; border-radius: 10px; text-align: center; border-bottom: 5px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.07); }
+        .kpi-card b { font-size: 14px; color: #666; text-transform: uppercase; }
+        .kpi-card h3 { margin: 10px 0 0; font-size: 28px; color: var(--azul); }
+
+        /* Gráficas */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .chart-container { background: var(--blanco); padding: 20px; border-radius: 10px; height: 350px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        /* Tablas Ordenadas */
+        .table-container { background: var(--blanco); padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th { background: #f8f9fa; color: var(--azul); padding: 12px; border-bottom: 2px solid var(--azul); }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
         tr:hover { background: #f1f7ff; }
-        .row-active { background: #e3f2fd !important; font-weight: bold; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .bg-red { background: #ffebee; color: #c62828; }
+        .bg-green { background: #e8f5e9; color: #2e7d32; }
 
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-amarillo { background: var(--amarillo); color: #333; }
-        .btn-reset { background: #666; color: white; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="login-view">
-    <div class="login-card">
-        <h2 style="color: var(--azul); margin-bottom: 5px;">Settepi BI</h2>
-        <p style="color: #666; margin-bottom: 20px; font-size: 14px;">Logística y Control de Servicio</p>
-        <input type="email" id="email" placeholder="Correo Corporativo">
-        <input type="password" id="pass" placeholder="Contraseña">
-        <button class="btn" style="background: var(--azul); color: white; width: 100%;" onclick="iniciarSesion()">Acceder</button>
-        <p id="login-error" style="color: red; font-size: 12px; margin-top: 10px;"></p>
+    <div style="background:white; padding:40px; border-radius:15px; width:320px; text-align:center;">
+        <h2 style="color:var(--azul)">Settepi Login</h2>
+        <input type="email" id="email" placeholder="Usuario" style="width:100%; padding:10px; margin:10px 0;">
+        <input type="password" id="pass" placeholder="Contraseña" style="width:100%; padding:10px; margin:10px 0;">
+        <button class="btn" style="background:var(--azul); color:white; width:100%" onclick="iniciarSesion()">Entrar</button>
+        <p id="login-error" style="color:red; font-size:12px;"></p>
     </div>
 </div>
 
 <div id="dashboard-view">
     <div class="topbar">
-        <h3 style="margin:0;">Dashboard Nacional de Nivel de Servicio</h3>
-        <div style="display:flex; gap:10px;">
-            <button id="btn-subir" class="btn btn-amarillo oculto" onclick="document.getElementById('fileInput').click()">📂 Cargar Reporte Excel</button>
+        <h2 style="margin:0;">Control de Nivel de Servicio</h2>
+        <div>
+            <button class="btn" style="background:var(--amarillo);" onclick="document.getElementById('fileInput').click()">Subir Excel</button>
             <input type="file" id="fileInput" class="oculto">
-            <button class="btn" style="background:rgba(255,255,255,0.2); color:white;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button class="btn" style="background:rgba(255,255,255,0.2); color:white; margin-left:10px;" onclick="cerrarSesion()">Salir</button>
         </div>
     </div>
 
     <div class="filter-bar">
-        <div class="filter-group">
-            <label>Criterio de Retraso</label>
-            <select id="f-criterio" onchange="renderAll()">
-                <option value="4">CORP (4 min)</option>
-                <option value="0">CLIENTE (0 min)</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label>Semana</label>
-            <select id="f-semana" onchange="cambiarFiltro('sem', this.value)"></select>
-        </div>
-        <div class="filter-group">
-            <label>Grupo / Cliente</label>
-            <select id="f-grupo" onchange="cambiarFiltro('grp', this.value)"></select>
-        </div>
-        <button class="btn btn-reset" onclick="resetFiltros()" style="margin-left: auto;">🔄 Restablecer Filtros</button>
+        <select id="f-criterio" onchange="renderAll()"><option value="4">Criterio CORP (4 min)</option><option value="0">Criterio Cliente (0 min)</option></select>
+        <select id="f-semana" onchange="cambiarFiltro('sem', this.value)"></select>
+        <select id="f-grupo" onchange="cambiarFiltro('grp', this.value)"></select>
     </div>
 
     <div class="main-content">
         <div class="kpi-row">
-            <div class="kpi-card" style="border-bottom-color: var(--azul);"><b>NS General</b><h3 id="kpi-ns">0%</h3></div>
-            <div class="kpi-card"><b>Viajes Válidos</b><h3 id="kpi-viajes">0</h3></div>
-            <div class="kpi-card" style="border-bottom-color: #f44336;"><b>Retardos (> Crit)</b><h3 id="kpi-tarde">0</h3></div>
-            <div class="kpi-card" style="border-bottom-color: var(--amarillo);"><b>1-10 Minutos</b><h3 id="kpi-1-10">0</h3></div>
-            <div class="kpi-card" style="border-bottom-color: #000;"><b>11+ Minutos</b><h3 id="kpi-11">0</h3></div>
+            <div class="kpi-card" style="border-bottom-color: #4CAF50;"><b>Nivel de Servicio (Llegada)</b><h3 id="kpi-ns">0%</h3></div>
+            <div class="kpi-card" style="border-bottom-color: #2196F3;"><b>Nivel de Inicios a Tiempo</b><h3 id="kpi-inicios">0%</h3></div>
+            <div class="kpi-card" style="border-bottom-color: #FFC107;"><b>Viajes Evaluados</b><h3 id="kpi-viajes">0</h3></div>
+            <div class="kpi-card" style="border-bottom-color: #F44336;"><b>Llegadas Tarde</b><h3 id="kpi-tarde">0</h3></div>
         </div>
 
         <div class="charts-grid">
-            <div class="chart-container">
-                <h4 style="margin:0 0 10px 0;">Causa Raíz: Inicio vs Ruta</h4>
-                <canvas id="chartStacked"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4 style="margin:0 0 10px 0;">Tendencia Semanal (%)</h4>
-                <canvas id="chartTrend"></canvas>
-            </div>
-            <div class="chart-container">
-                <h4 style="margin:0 0 10px 0;">Distribución de Impacto</h4>
-                <canvas id="chartPie"></canvas>
-            </div>
+            <div class="chart-container"><h4>Tendencia Semanal de Cumplimiento (%)</h4><canvas id="chartTrend"></canvas></div>
+            <div class="chart-container"><h4>Distribución de Retrasos (Minutos)</h4><canvas id="chartPie"></canvas></div>
         </div>
 
         <div class="table-container">
-            <h4 style="margin:0 0 15px 0; color: var(--azul);">Desempeño por Ruta (DES) - Haz clic para filtrar</h4>
-            <table id="tabla-rutas">
+            <h4>Análisis de Retrasos Críticos</h4>
+            <table id="tabla-analisis">
                 <thead>
-                    <tr><th>Ruta (DES)</th><th>Viajes</th><th>Retardos</th><th>NS %</th><th>Dur. Plan</th><th>Dur. Real</th></tr>
+                    <tr>
+                        <th>ID Viaje</th>
+                        <th>Sem</th>
+                        <th>Ruta (DES)</th>
+                        <th>Unidad</th>
+                        <th>Operador</th>
+                        <th>Estado Inicio</th>
+                        <th>Min. Tarde</th>
+                        <th>Clasificación</th>
+                    </tr>
                 </thead>
                 <tbody></tbody>
             </table>
@@ -147,175 +125,163 @@
 
     let masterData = [];
     let charts = {};
-    let activeFilters = { sem: 'ALL', grp: 'ALL', des: 'ALL' };
+    let filters = { sem: 'ALL', grp: 'ALL' };
 
-    // --- SEGURIDAD: CONTROL DE ACCESO ---
+    // ESCALAS DE GRÁFICAS CONFIGURADAS A 10%
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                min: 0,
+                max: 100,
+                ticks: { stepSize: 10, callback: (v) => v + '%' }
+            }
+        }
+    };
+
     onAuthStateChanged(auth, (user) => {
-        const loginView = document.getElementById('login-view');
-        const dashView = document.getElementById('dashboard-view');
         if (user) {
-            loginView.style.display = 'none';
-            dashView.style.display = 'block';
-            if(user.email === "n.garcia@settepi.com") document.getElementById('btn-subir').classList.remove('oculto');
-            fetchData();
+            document.getElementById('login-view').classList.add('oculto');
+            document.getElementById('dashboard-view').style.display = 'block';
+            cargarDatos();
         } else {
-            loginView.style.display = 'flex';
-            dashView.style.display = 'none';
+            document.getElementById('login-view').classList.remove('oculto');
+            document.getElementById('dashboard-view').style.display = 'none';
         }
     });
 
     window.iniciarSesion = async () => {
-        const u = document.getElementById('email').value;
-        const p = document.getElementById('pass').value;
-        try { await signInWithEmailAndPassword(auth, u, p); } 
-        catch (e) { document.getElementById('login-error').innerText = "Credenciales Incorrectas"; }
+        const u = document.getElementById('email').value, p = document.getElementById('pass').value;
+        try { await signInWithEmailAndPassword(auth, u, p); } catch (e) { document.getElementById('login-error').innerText = "Error de acceso"; }
     };
 
-    window.cerrarSesion = () => signOut(auth).then(() => location.reload());
+    window.cerrarSesion = () => signOut(auth);
 
-    // --- LÓGICA DE DATOS Y FILTROS ---
-    async function fetchData() {
+    async function cargarDatos() {
         const snap = await getDocs(collection(db, "servicios_settepi"));
-        masterData = [];
-        snap.forEach(d => masterData.push(d.data()));
-        updateSelectors();
+        masterData = []; snap.forEach(d => masterData.push(d.data()));
+        
+        const sems = [...new Set(masterData.map(d=>d.sem))].sort((a,b)=>a-b);
+        document.getElementById('f-semana').innerHTML = '<option value="ALL">Todas las Semanas</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
+        
+        const grps = [...new Set(masterData.map(d=>d.grp))].sort();
+        document.getElementById('f-grupo').innerHTML = '<option value="ALL">Todos los Grupos</option>' + grps.map(g=>`<option value="${g}">${g}</option>`).join('');
+        
         renderAll();
     }
 
-    function updateSelectors() {
-        const getU = (k) => [...new Set(masterData.map(d => d[k]))].sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
-        const fill = (id, data) => document.getElementById(id).innerHTML = `<option value="ALL">TODOS</option>` + data.map(v => `<option value="${v}">${v}</option>`).join('');
-        fill('f-semana', getU('sem'));
-        fill('f-grupo', getU('grp'));
-    }
-
-    window.cambiarFiltro = (t, v) => { activeFilters[t] = v; renderAll(); };
-    window.resetFiltros = () => { activeFilters = { sem: 'ALL', grp: 'ALL', des: 'ALL' }; renderAll(); };
+    window.cambiarFiltro = (t, v) => { filters[t] = v; renderAll(); };
 
     window.renderAll = () => {
         const crit = parseInt(document.getElementById('f-criterio').value);
-        let data = masterData.filter(d => 
-            (activeFilters.sem === 'ALL' || String(d.sem) === activeFilters.sem) &&
-            (activeFilters.grp === 'ALL' || d.grp === activeFilters.grp) &&
-            (activeFilters.des === 'ALL' || d.des === activeFilters.des)
-        );
+        const data = masterData.filter(d => (filters.sem === 'ALL' || String(d.sem) === filters.sem) && (filters.grp === 'ALL' || d.grp === filters.grp));
 
         const total = data.length || 1;
         const tarde = data.filter(d => d.latL > crit).length;
-        const ns = (1 - (tarde/total)) * 100;
+        const inicioTarde = data.filter(d => d.latI > crit).length;
 
-        document.getElementById('kpi-ns').innerText = `${ns.toFixed(1)}%`;
+        document.getElementById('kpi-ns').innerText = ((1 - tarde/total) * 100).toFixed(1) + '%';
+        document.getElementById('kpi-inicios').innerText = ((1 - inicioTarde/total) * 100).toFixed(1) + '%';
         document.getElementById('kpi-viajes').innerText = data.length;
         document.getElementById('kpi-tarde').innerText = tarde;
-        document.getElementById('kpi-1-10').innerText = data.filter(d => d.latL > crit && d.latL <= (crit+10)).length;
-        document.getElementById('kpi-11').innerText = data.filter(d => d.latL > (crit+10)).length;
 
-        drawStacked(data, crit);
-        drawTrend(data, crit);
-        drawPie(data, crit);
-        drawTable(data, crit);
+        renderCharts(data, crit);
+        renderTable(data, crit);
     };
 
-    // --- PROCESADOR DE EXCEL (CRITERIOS EXACTOS) ---
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const reader = new FileReader();
-        reader.onload = async (evt) => {
-            const data = new Uint8Array(evt.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            
-            let count = 0;
-            for (const row of json) {
-                // CRITERIO: TIPO / ESTADO / RETRASO VALIDO / IS_IN
-                const st = Number(row['status']);
-                const tp = String(row['Tipo de Viaje']).toUpperCase();
-                const sh = String(row['shift']).toUpperCase();
-                const rq = Number(row['record_quality']);
-
-                if (![6,7,8].includes(st) || !["N","V"].includes(tp) || sh !== "IN" || rq !== 1) continue;
-
-                // TIEMPOS Y FECHA ETA
-                const toM = (v) => { if(typeof v === 'number') return v*1440; const p=String(v).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
-                let sP = toM(row['start_time']), sR = toM(row['start_eta']);
-                let eP = toM(row['end_time']), eR = toM(row['end_eta']);
-
-                // CRITERIO: FECHA ETA (+1 día si cruza medianoche)
-                if (eR < sP) eR += 1440;
-                if (sR < (sP - 300)) sR += 1440;
-
-                // DIF LLEGADA
-                const difLlegada = Math.max(0, Math.round(eR - eP));
-
-                await setDoc(doc(db, "servicios_settepi", String(row['id'])), {
-                    id: row['id'], 
-                    grp: row['group'] || row['grp'] || "S/G", 
-                    des: row['des'] || "S/R", 
-                    sem: row['Sem Via'] || 0,
-                    latL: difLlegada, 
-                    latI: Math.max(0, Math.round(sR - sP)),
-                    durP: Math.round(eP - sP), 
-                    durR: Math.round(eR - sR)
-                });
-                count++;
-            }
-            alert(`Sincronización completa: ${count} viajes validados.`);
-            fetchData();
-        };
-        reader.readAsArrayBuffer(e.target.files[0]);
-    });
-
-    // --- RENDERIZADO DE GRÁFICAS ---
-    function drawStacked(data, crit) {
+    function renderCharts(data, crit) {
         const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
-        if(charts.stacked) charts.stacked.destroy();
-        charts.stacked = new Chart(document.getElementById('chartStacked'), {
-            type: 'bar',
-            data: {
-                labels: sems.map(s=>`Sem ${s}`),
-                datasets: [
-                    { label: 'En Tiempo (NS)', data: sems.map(s => { const d=data.filter(x=>x.sem===s); return ((d.filter(x=>x.latL<=crit).length/d.length)*100).toFixed(1)}), backgroundColor: '#004a99' },
-                    { label: 'Falla Ruta', data: sems.map(s => { const d=data.filter(x=>x.sem===s); return ((d.filter(x=>x.latL>crit && x.latI<=0).length/d.length)*100).toFixed(1)}), backgroundColor: '#ff9800' },
-                    { label: 'Inicio Tarde', data: sems.map(s => { const d=data.filter(x=>x.sem===s); return ((d.filter(x=>x.latL>crit && x.latI>0).length/d.length)*100).toFixed(1)}), backgroundColor: '#757575' }
-                ]
-            },
-            options: { responsive: true, maintainAspectRatio: false, scales: { x:{stacked:true}, y:{stacked:true, max:100} }, plugins:{ legend:{position:'bottom'} } }
-        });
-    }
-
-    function drawTrend(data, crit) {
-        const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
+        
+        // Gráfica de Tendencia
         if(charts.trend) charts.trend.destroy();
         charts.trend = new Chart(document.getElementById('chartTrend'), {
             type: 'line',
-            data: { labels: sems.map(s=>`S${s}`), datasets: [{ label: '% NS', data: sems.map(s=>{ const d=data.filter(x=>x.sem===s); return ((1-d.filter(x=>x.latL>crit).length/d.length)*100).toFixed(1)}), borderColor: '#004a99', tension:0.3 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y:{min:70, max:100} } }
+            data: {
+                labels: sems.map(s=>'Sem '+s),
+                datasets: [{
+                    label: '% Cumplimiento',
+                    data: sems.map(s => {
+                        const d = data.filter(x=>x.sem===s);
+                        return ((1 - d.filter(x=>x.latL > crit).length / d.length) * 100).toFixed(1);
+                    }),
+                    borderColor: '#004a99',
+                    backgroundColor: 'rgba(0,74,153,0.1)',
+                    fill: true
+                }]
+            },
+            options: chartOptions
         });
-    }
 
-    function drawPie(data, crit) {
-        const ok = data.filter(d=>d.latL<=crit).length;
-        const c1 = data.filter(d=>d.latL>crit && d.latL<=(crit+10)).length;
-        const c2 = data.filter(d=>d.latL>(crit+10)).length;
+        // Gráfica de Pie (Distribución)
+        const d1 = data.filter(d => d.latL <= crit).length;
+        const d2 = data.filter(d => d.latL > crit && d.latL <= (crit+10)).length;
+        const d3 = data.filter(d => d.latL > (crit+10)).length;
+
         if(charts.pie) charts.pie.destroy();
         charts.pie = new Chart(document.getElementById('chartPie'), {
             type: 'doughnut',
-            data: { labels:['OK','1-10 min','11+ min'], datasets:[{ data:[ok,c1,c2], backgroundColor:['#004a99','#ffcc00','#333'] }] },
-            options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} } }
+            data: {
+                labels: ['A Tiempo', '1-10 Min Tarde', '11+ Min Tarde'],
+                datasets: [{
+                    data: [d1, d2, d3],
+                    backgroundColor: ['#4CAF50', '#FFC107', '#F44336']
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    function drawTable(data, crit) {
-        const rMap = {};
-        data.forEach(d => { if(!rMap[d.des]) rMap[d.des]={v:0,r:0,dP:0,dR:0}; rMap[d.des].v++; if(d.latL>crit) rMap[d.des].r++; rMap[d.des].dP+=d.durP; rMap[d.des].dR+=d.durR; });
-        const tbody = document.querySelector('#tabla-rutas tbody');
-        tbody.innerHTML = Object.entries(rMap).sort((a,b)=>b[1].r - a[1].r).map(([des, i]) => {
-            const ns = (1-i.r/i.v)*100;
-            return `<tr class="${activeFilters.des===des?'row-active':''}" onclick="cambiarFiltro('des', '${des===activeFilters.des?'ALL':des}')">
-                <td>${des}</td><td>${i.v}</td><td>${i.r}</td><td style="color:${ns<90?'red':'green'}"><b>${ns.toFixed(1)}%</b></td>
-                <td>${(i.dP/i.v).toFixed(0)} min</td><td>${(i.dR/i.v).toFixed(0)} min</td>
-            </tr>`;
-        }).join('');
+    function renderTable(data, crit) {
+        const tbody = document.querySelector('#tabla-analisis tbody');
+        // Ordenamos por los más tarde primero
+        const sorted = data.sort((a,b) => b.latL - a.latL).slice(0, 50); 
+        
+        tbody.innerHTML = sorted.map(d => `
+            <tr>
+                <td>${d.id}</td>
+                <td>${d.sem}</td>
+                <td><b>${d.des}</b></td>
+                <td>${d.unidad || '---'}</td>
+                <td>${d.operador || 'OPERADOR NO ASIG.'}</td>
+                <td><span class="badge ${d.latI > 0 ? 'bg-red' : 'bg-green'}">${d.latI > 0 ? 'INICIO TARDE' : 'INICIO OK'}</span></td>
+                <td style="color:${d.latL > crit ? 'red' : 'black'}"><b>${d.latL} min</b></td>
+                <td><span class="badge ${d.latL > 10 ? 'bg-red' : (d.latL > 0 ? 'bg-green' : '')}">${d.latL > 10 ? '+10 mins' : (d.latL > 0 ? '1-10 mins' : 'A TIEMPO')}</span></td>
+            </tr>
+        `).join('');
     }
+
+    // PROCESADOR EXCEL ACTUALIZADO
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const reader = new FileReader();
+        reader.onload = async (evt) => {
+            const workbook = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
+            const json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            
+            for (const row of json) {
+                // Aplicamos tus filtros de Excel
+                const st = Number(row['status']), tp = String(row['Tipo de Viaje']).toUpperCase(), sh = String(row['shift']).toUpperCase(), rq = Number(row['record_quality']);
+                if (![6,7,8].includes(st) || !["N","V"].includes(tp) || sh !== "IN" || rq !== 1) continue;
+
+                const toM = (v) => { if(typeof v === 'number') return v*1440; const p=String(v).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
+                let sP = toM(row['start_time']), sR = toM(row['start_eta']), eP = toM(row['end_time']), eR = toM(row['end_eta']);
+
+                if (eR < sP) eR += 1440; // Cruce de medianoche
+                if (sR < (sP - 300)) sR += 1440;
+
+                await setDoc(doc(db, "servicios_settepi", String(row['id'])), {
+                    id: row['id'], sem: row['Sem Via'], des: row['des'], grp: row['group'] || row['grp'],
+                    unidad: row['unid_id'] || row['Unidad'], operador: row['oper_name'] || row['Operador'],
+                    latL: Math.max(0, Math.round(eR - eP)),
+                    latI: Math.max(0, Math.round(sR - sP))
+                });
+            }
+            alert("Base de datos actualizada");
+            cargarDatos();
+        };
+        reader.readAsArrayBuffer(e.target.files[0]);
+    });
 </script>
 </body>
 </html>
