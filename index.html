@@ -17,7 +17,6 @@
         .topbar { background: var(--azul); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--amarillo); }
         .filters { background: white; padding: 15px 30px; display: flex; gap: 15px; border-bottom: 1px solid #ddd; }
         
-        /* Barra de Progreso Dinámica */
         #progress-container { display: none; background: #eee; height: 20px; width: 95%; margin: 10px auto; border-radius: 10px; overflow: hidden; border: 1px solid #ccc; }
         #progress-bar { background: var(--verde-ok); height: 100%; width: 0%; transition: width 0.1s; color: white; text-align: center; font-size: 12px; line-height: 20px; font-weight: bold; }
         #progress-text { display: none; text-align: center; font-size: 13px; font-weight: bold; color: var(--azul); margin-bottom: 5px; }
@@ -36,8 +35,9 @@
         th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid var(--amarillo); color: var(--azul); }
         td { padding: 12px; border-bottom: 1px solid #eee; }
         .retraso-valor { color: var(--rojo); font-weight: bold; }
-        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .oculto { display: none; }
+        .btn { padding: 10px 18px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn:disabled { background: #ccc !important; cursor: not-allowed; }
+        .oculto { display: none !important; }
     </style>
 </head>
 <body>
@@ -45,9 +45,10 @@
 <div id="login-view">
     <div class="login-card">
         <h2 style="color:var(--azul); margin-top:0;">Settepi BI</h2>
-        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="email" id="email" placeholder="Correo electrónico" value="n.garcia@settepi.com">
         <input type="password" id="pass" placeholder="Contraseña">
-        <button class="btn" style="background:var(--azul); color:white; width:100%" onclick="iniciarSesion()">Entrar</button>
+        <button id="btn-entrar" class="btn" style="background:var(--azul); color:white; width:100%" onclick="iniciarSesion()">Entrar</button>
+        <p id="login-msg" style="font-size:12px; color:var(--rojo); margin-top:10px;"></p>
     </div>
 </div>
 
@@ -55,7 +56,7 @@
     <div class="topbar">
         <h2 style="margin:0;">Control de Nivel de Servicio</h2>
         <div>
-            <button class="btn" style="background:var(--amarillo);" onclick="document.getElementById('xlInput').click()">📂 Cargar Datos (Excel)</button>
+            <button class="btn" style="background:var(--amarillo);" onclick="document.getElementById('xlInput').click()">📂 Cargar Datos</button>
             <input type="file" id="xlInput" class="oculto">
             <button class="btn" style="background:rgba(255,255,255,0.2); color:white; margin-left:10px;" onclick="cerrarSesion()">Salir</button>
         </div>
@@ -82,21 +83,21 @@
         </div>
 
         <div class="charts-grid">
-            <div class="chart-box"><h4>Tendencia de Cumplimiento Semanal</h4><canvas id="chartTrend"></canvas></div>
-            <div class="chart-box"><h4>Distribución de Puntualidad</h4><canvas id="chartPie"></canvas></div>
+            <div class="chart-box"><h4>Tendencia Semanal</h4><canvas id="chartTrend"></canvas></div>
+            <div class="chart-box"><h4>Distribución</h4><canvas id="chartPie"></canvas></div>
         </div>
 
         <div class="table-box">
-            <h3 style="color:var(--rojo); margin-top:0;">Análisis de Retrasos Críticos</h3>
+            <h3 style="color:var(--rojo); margin-top:0;">Análisis de Retrasos</h3>
             <table id="tabla-retrasos">
                 <thead>
                     <tr>
-                        <th>Ruta (DES)</th>
+                        <th>Ruta</th>
                         <th>Semana</th>
-                        <th>Cliente / UDN</th>
+                        <th>Cliente/UDN</th>
                         <th>Operador</th>
                         <th>Min. Tarde</th>
-                        <th>Desempeño Ruta</th>
+                        <th>NS Ruta</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -108,7 +109,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyC76690rc5SKbN0kFFOOLsa-ua21VJ-8dI", 
@@ -125,6 +126,7 @@
     let masterData = [];
     let charts = {};
 
+    // --- SESIÓN ---
     onAuthStateChanged(auth, (user) => {
         if (user) {
             document.getElementById('login-view').classList.add('oculto');
@@ -133,27 +135,51 @@
         } else {
             document.getElementById('login-view').classList.remove('oculto');
             document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('btn-entrar').disabled = false;
+            document.getElementById('btn-entrar').innerText = "Entrar";
         }
     });
 
-    window.iniciarSesion = () => {
-        const u = document.getElementById('email').value, p = document.getElementById('pass').value;
-        signInWithEmailAndPassword(auth, u, p).catch(e => alert("Acceso denegado: " + e.message));
+    window.iniciarSesion = async () => {
+        const u = document.getElementById('email').value;
+        const p = document.getElementById('pass').value;
+        const btn = document.getElementById('btn-entrar');
+        const msg = document.getElementById('login-msg');
+
+        if(!p) { msg.innerText = "Ingresa tu contraseña"; return; }
+
+        try {
+            btn.disabled = true;
+            btn.innerText = "Iniciando...";
+            msg.innerText = "";
+            await signInWithEmailAndPassword(auth, u, p);
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerText = "Entrar";
+            msg.innerText = "Error de acceso: " + e.message;
+        }
     };
+
     window.cerrarSesion = () => signOut(auth);
 
+    // --- LÓGICA ---
     async function cargarDesdeFirebase() {
-        const snap = await getDocs(collection(db, "servicios_settepi"));
-        masterData = []; snap.forEach(d => masterData.push(d.data()));
-        actualizarSelectores();
-        procesarYRenderizar();
+        try {
+            const snap = await getDocs(collection(db, "servicios_settepi"));
+            masterData = [];
+            snap.forEach(d => masterData.push(d.data()));
+            actualizarSelectores();
+            procesarYRenderizar();
+        } catch (e) {
+            console.error("Error cargando datos:", e);
+        }
     }
 
     function actualizarSelectores() {
         const sems = [...new Set(masterData.map(d=>d.sem))].sort((a,b)=>a-b);
         document.getElementById('sel-sem').innerHTML = '<option value="ALL">Todas las Semanas</option>' + sems.map(s=>`<option value="${s}">Semana ${s}</option>`).join('');
         const clis = [...new Set(masterData.map(d=>d.grp))].sort();
-        document.getElementById('sel-cliente').innerHTML = '<option value="ALL">Todos los Grupos / UDN</option>' + clis.map(c=>`<option value="${c}">${c}</option>`).join('');
+        document.getElementById('sel-cliente').innerHTML = '<option value="ALL">Todos los Clientes</option>' + clis.map(c=>`<option value="${c}">${c}</option>`).join('');
     }
 
     window.procesarYRenderizar = () => {
@@ -178,12 +204,13 @@
 
     function renderGraficas(data, crit) {
         const sems = [...new Set(data.map(d=>d.sem))].sort((a,b)=>a-b);
+        
         if(charts.trend) charts.trend.destroy();
         charts.trend = new Chart(document.getElementById('chartTrend'), {
             type: 'line',
             data: {
                 labels: sems.map(s=>'S'+s),
-                datasets: [{ label: '% Cumplimiento', data: sems.map(s=>{ const d=data.filter(x=>x.sem===s); return ((1-d.filter(x=>x.latL>crit).length/d.length)*100).toFixed(1)}), borderColor: '#4caf50', backgroundColor: 'rgba(76,175,80,0.1)', fill: true, tension: 0.3 }]
+                datasets: [{ label: '% NS', data: sems.map(s=>{ const d=data.filter(x=>x.sem===s); return ((1-d.filter(x=>x.latL>crit).length/d.length)*100).toFixed(1)}), borderColor: '#4caf50', tension: 0.3, fill: true, backgroundColor: 'rgba(76,175,80,0.1)' }]
             },
             options: { maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
         });
@@ -192,7 +219,7 @@
         if(charts.pie) charts.pie.destroy();
         charts.pie = new Chart(document.getElementById('chartPie'), {
             type: 'doughnut',
-            data: { labels: ['A Tiempo', 'Retraso'], datasets: [{ data: [data.length - tarde, tarde], backgroundColor: ['#4caf50', '#d32f2f'] }] },
+            data: { labels: ['Puntual', 'Retraso'], datasets: [{ data: [data.length - tarde, tarde], backgroundColor: ['#4caf50', '#d32f2f'] }] },
             options: { maintainAspectRatio: false }
         });
     }
@@ -220,7 +247,7 @@
         ).join('');
     }
 
-    // --- CARGA DINÁMICA DE EXCEL ---
+    // --- EXCEL ---
     document.getElementById('xlInput').addEventListener('change', (e) => {
         const reader = new FileReader();
         const pBar = document.getElementById('progress-bar'), pCont = document.getElementById('progress-container'), pText = document.getElementById('progress-text');
@@ -254,11 +281,11 @@
                 count++;
                 const porc = Math.round((count/total)*100);
                 pBar.style.width = porc + '%'; pBar.innerText = porc + '%';
-                pText.innerText = `Sincronizando: ${count} / ${total} registros...`;
+                pText.innerText = `Subiendo: ${count} / ${total}...`;
             }
 
-            pText.innerText = "¡Datos actualizados!";
-            setTimeout(() => { pCont.style.display = 'none'; pText.style.display = 'none'; }, 2500);
+            pText.innerText = "¡Carga finalizada!";
+            setTimeout(() => { pCont.style.display = 'none'; pText.style.display = 'none'; }, 2000);
             cargarDesdeFirebase();
         };
         reader.readAsArrayBuffer(e.target.files[0]);
