@@ -2,45 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Settepi BI | Executive Control</title>
+    <title>Settepi BI | Optimized v4.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --s-azul: #003366;
             --s-oro: #FFCC00;
-            --ok: #0056b3; /* Azul Todo OK */
-            --no-info: #9e9e9e; /* Gris Sin Info */
-            --inicio-tarde: #b71c1c; /* Rojo Fuerte */
-            --trayecto: #e65100; /* Naranja/Rojizo */
+            --ok: #0056b3; 
+            --no-info: #9e9e9e; 
+            --inicio-tarde: #b71c1c; 
+            --trayecto: #e65100; 
             --bg: #f8fafc;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; color: #1e293b; }
-        
-        #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 6px; background: rgba(0,0,0,0.1); z-index: 3000; display: none; }
-        #progress-bar { height: 100%; width: 0%; background: var(--s-oro); transition: width 0.2s; box-shadow: 0 0 15px var(--s-oro); }
-
+        #progress-container { position: fixed; top: 0; left: 0; width: 100%; height: 8px; background: rgba(0,0,0,0.1); z-index: 9999; display: none; }
+        #progress-bar { height: 100%; width: 0%; background: var(--s-oro); box-shadow: 0 0 20px var(--s-oro); transition: width 0.2s; }
         .topbar { background: var(--s-azul); color: white; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 5px solid var(--s-oro); }
         .filters { background: white; padding: 20px 40px; display: flex; gap: 20px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 1000; }
-        
-        select { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: var(--s-azul); cursor: pointer; }
+        select { padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: var(--s-azul); }
         .container { padding: 30px 40px; max-width: 1600px; margin: auto; }
-        
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-bottom: 35px; }
-        .kpi-card { background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-top: 5px solid var(--s-azul); }
-        .kpi-card h2 { font-size: 36px; margin: 5px 0; color: var(--s-azul); }
-        .kpi-card span { font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase; }
-
-        .chart-grid { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 30px; margin-bottom: 35px; }
-        .chart-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); height: 450px; }
-        
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        th { background: var(--s-azul); color: white; padding: 15px; text-align: left; font-size: 13px; }
-        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        
+        .kpi-card { background: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid var(--s-azul); }
+        .chart-box { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 450px; margin-bottom: 30px; }
         .btn { padding: 12px 25px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-oro { background: var(--s-oro); color: var(--s-azul); }
         .oculto { display: none !important; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
+        th { background: var(--s-azul); color: white; padding: 15px; text-align: left; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; }
     </style>
 </head>
 <body>
@@ -48,64 +38,59 @@
 <div id="progress-container"><div id="progress-bar"></div></div>
 
 <div id="login-view">
-    <div style="background:white; padding:50px; border-radius:15px; text-align:center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
-        <h2 style="color:var(--s-azul)">Settepi Intelligence</h2>
-        <input type="email" id="email" value="n.garcia@settepi.com" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
-        <input type="password" id="pass" placeholder="Password" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
-        <button class="btn btn-oro" style="width:100%; margin-top:15px;" onclick="iniciarSesion()">INGRESAR</button>
+    <div style="display: flex; height: 100vh; align-items: center; justify-content: center; background: var(--s-azul);">
+        <div style="background:white; padding:50px; border-radius:15px; text-align:center; width: 350px;">
+            <h2 style="color:var(--s-azul)">Settepi Intelligence</h2>
+            <input type="email" id="email" value="n.garcia@settepi.com" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+            <input type="password" id="pass" placeholder="Password" style="width:100%; padding:12px; margin:10px 0; border:1px solid #ddd; border-radius:8px;">
+            <button class="btn btn-oro" style="width:100%;" onclick="iniciarSesion()">INGRESAR</button>
+        </div>
     </div>
 </div>
 
 <div id="dashboard-view" class="oculto">
     <div class="topbar">
-        <h2 style="margin:0;">Settepi <span style="color:var(--s-oro)">Executive Dashboard</span></h2>
+        <h2 style="margin:0;">Settepi <span style="color:var(--s-oro)">Control Room</span></h2>
         <div>
-            <button class="btn btn-oro" onclick="document.getElementById('xlInput').click()">📥 IMPORTAR DATOS</button>
+            <button class="btn btn-oro" onclick="document.getElementById('xlInput').click()">📥 ACTUALIZAR EXCEL</button>
             <input type="file" id="xlInput" class="oculto">
-            <button class="btn" style="background:rgba(255,255,255,0.1); color:white; margin-left:10px;" onclick="cerrarSesion()">CERRAR</button>
+            <button class="btn" style="background:rgba(255,255,255,0.1); color:white; margin-left:10px;" onclick="cerrarSesion()">SALIR</button>
         </div>
     </div>
 
     <div class="filters">
-        <select id="sel-periodo" onchange="procesarYRenderizar()">
-            <option value="sem">Semana a Semana</option>
-            <option value="mes">Mensual</option>
-        </select>
-        <select id="sel-bu" onchange="actualizarClientes()"><option value="ALL">Business Unit (Todas)</option></select>
-        <select id="sel-grp" onchange="procesarYRenderizar()"><option value="ALL">Cliente (Todos)</option></select>
+        <select id="sel-periodo" onchange="procesarYRenderizar()"><option value="sem">Semana</option><option value="mes">Mes</option></select>
+        <select id="sel-bu" onchange="actualizarClientes()"><option value="ALL">Business Unit</option></select>
+        <select id="sel-grp" onchange="procesarYRenderizar()"><option value="ALL">Cliente</option></select>
     </div>
 
     <div class="container">
         <div class="kpi-row">
-            <div class="kpi-card"><span>Nivel de Servicio</span><h2 id="k-ns">0%</h2></div>
+            <div class="kpi-card"><span>NS General</span><h2 id="k-ns">0%</h2></div>
             <div class="kpi-card"><span>Viajes Válidos</span><h2 id="k-viajes">0</h2></div>
-            <div class="kpi-card"><span>Retrasos Críticos</span><h2 id="k-tarde" style="color:var(--inicio-tarde)">0</h2></div>
-            <div class="kpi-card"><span>Sin Información</span><h2 id="k-noinfo" style="color:var(--no-info)">0</h2></div>
+            <div class="kpi-card"><span>Inicio Tarde (Rojo)</span><h2 id="k-tarde" style="color:var(--inicio-tarde)">0</h2></div>
+            <div class="kpi-card"><span>Sin Datos (Gris)</span><h2 id="k-noinfo" style="color:var(--no-info)">0</h2></div>
         </div>
 
-        <div class="chart-grid">
-            <div class="chart-box">
-                <h4 style="margin:0 0 15px 0;">DESGLOSE POR ORIGEN DE RETRASO (100%)</h4>
-                <canvas id="chartStacked"></canvas>
-            </div>
-            <div class="chart-box">
-                <h4 style="margin:0 0 15px 0;">PEORES 10 CLIENTES (NS %)</h4>
-                <canvas id="chartWorst"></canvas>
-            </div>
+        <div class="chart-box">
+            <h4>DESGLOSE 100% - CRITERIOS EJECUTIVOS</h4>
+            <canvas id="chartStacked"></canvas>
         </div>
 
-        <h4 style="color:var(--s-azul)">DETALLE POR SEMANA / MES</h4>
-        <table id="tab-data">
-            <thead><tr id="head-data"></tr></thead>
-            <tbody></tbody>
-        </table>
+        <div class="chart-box" style="height: auto;">
+            <h4>RENDIMIENTO POR CLIENTE</h4>
+            <table id="tab-data">
+                <thead><tr id="head-data"></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, writeBatch, query, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = { 
         apiKey: "AIzaSyC76690rc5SKbN0kFFOOLsa-ua21VJ-8dI", 
@@ -123,32 +108,54 @@
     let charts = {};
 
     onAuthStateChanged(auth, user => {
-        if(user) { document.getElementById('login-view').classList.add('oculto'); document.getElementById('dashboard-view').classList.remove('oculto'); cargarDatos(); }
-        else { document.getElementById('login-view').classList.remove('oculto'); document.getElementById('dashboard-view').classList.add('oculto'); }
+        if(user) { 
+            document.getElementById('login-view').classList.add('oculto'); 
+            document.getElementById('dashboard-view').classList.remove('oculto'); 
+            cargarDatosOptimizados(); 
+        } else {
+            document.getElementById('login-view').classList.remove('oculto');
+            document.getElementById('dashboard-view').classList.add('oculto');
+        }
     });
 
     window.iniciarSesion = async () => {
         try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value); } catch(e) { alert("Error"); }
     };
-    window.cerrarSesion = () => signOut(auth);
+    window.cerrarSesion = () => { localStorage.removeItem('settepi_cache'); signOut(auth); };
 
-    async function cargarDatos() {
-        const snap = await getDocs(collection(db, "servicios_settepi"));
-        masterData = []; snap.forEach(d => masterData.push(d.data()));
+    // --- MOTOR DE CACHÉ (AHORRO DE CUOTA) ---
+    async function cargarDatosOptimizados() {
+        const cache = localStorage.getItem('settepi_cache');
+        if (cache) {
+            console.log("Cargando desde Memoria Local (0 cuota Firebase)");
+            masterData = JSON.parse(cache);
+            renderizarTodo();
+        } else {
+            console.log("Caché vacía, consultando Firebase...");
+            const q = query(collection(db, "servicios_settepi"), limit(10000));
+            const snap = await getDocs(q);
+            masterData = [];
+            snap.forEach(d => masterData.push(d.data()));
+            localStorage.setItem('settepi_cache', JSON.stringify(masterData));
+            renderizarTodo();
+        }
+    }
+
+    function renderizarTodo() {
         llenarBU();
         procesarYRenderizar();
     }
 
     function llenarBU() {
         const bus = [...new Set(masterData.map(d=>d.bu))].sort();
-        document.getElementById('sel-bu').innerHTML = '<option value="ALL">Business Unit (Todas)</option>' + bus.map(b=>`<option value="${b}">${b}</option>`).join('');
+        document.getElementById('sel-bu').innerHTML = '<option value="ALL">BUs (Todas)</option>' + bus.map(b=>`<option value="${b}">${b}</option>`).join('');
     }
 
     window.actualizarClientes = () => {
         const bu = document.getElementById('sel-bu').value;
         const filtered = bu === 'ALL' ? masterData : masterData.filter(d=>d.bu===bu);
         const grps = [...new Set(filtered.map(d=>d.grp))].sort();
-        document.getElementById('sel-grp').innerHTML = '<option value="ALL">Cliente (Todos)</option>' + grps.map(g=>`<option value="${g}">${g}</option>`).join('');
+        document.getElementById('sel-grp').innerHTML = '<option value="ALL">Clientes (Todos)</option>' + grps.map(g=>`<option value="${g}">${g}</option>`).join('');
         procesarYRenderizar();
     }
 
@@ -167,21 +174,20 @@
         document.getElementById('k-noinfo').innerText = data.filter(d => d.noInfo).length;
 
         renderStackedChart(validos, pKey);
-        renderWorst(validos);
         renderTable(validos, pKey);
     };
 
     function renderStackedChart(data, pKey) {
-        const periodos = [...new Set(data.map(d => d[pKey]))].sort((a,b)=>a-b);
+        const periodos = [...new Set(data.map(d => d[pKey]))].sort((a,b)=>a-b).slice(-8);
         const sets = { ok: [], it: [], pt: [], ni: [] };
 
         periodos.forEach(p => {
             const s = data.filter(x => x[pKey] === p);
             const t = s.length || 1;
             sets.ok.push(((s.filter(x => x.latL <= 4 && x.latI <= 0 && !x.noInfo).length / t) * 100).toFixed(1));
-            sets.it.push(((s.filter(x => x.latI > 0 && !x.noInfo).length / t) * 100).toFixed(1)); // Inicio Tarde (Rojo Fuerte)
-            sets.pt.push(((s.filter(x => x.latL > 4 && x.latI <= 0 && !x.noInfo).length / t) * 100).toFixed(1)); // Trayecto (Naranja)
-            sets.ni.push(((s.filter(x => x.noInfo).length / t) * 100).toFixed(1)); // Sin Info (Gris)
+            sets.it.push(((s.filter(x => x.latI > 0 && !x.noInfo).length / t) * 100).toFixed(1)); 
+            sets.pt.push(((s.filter(x => x.latL > 4 && x.latI <= 0 && !x.noInfo).length / t) * 100).toFixed(1)); 
+            sets.ni.push(((s.filter(x => x.noInfo).length / t) * 100).toFixed(1)); 
         });
 
         if(charts.stack) charts.stack.destroy();
@@ -197,19 +203,6 @@
                 ]
             },
             options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true, max: 100 } } }
-        });
-    }
-
-    function renderWorst(data) {
-        const r = {};
-        data.forEach(d => { if(!r[d.grp]) r[d.grp]={t:0,l:0}; r[d.grp].t++; if(d.latL>4) r[d.grp].l++; });
-        const top = Object.entries(r).map(([k,v])=>({n:k, ns:(1-v.l/v.t)*100})).sort((a,b)=>a.ns-b.ns).slice(0,10);
-
-        if(charts.worst) charts.worst.destroy();
-        charts.worst = new Chart(document.getElementById('chartWorst'), {
-            type: 'bar',
-            data: { labels: top.map(x=>x.n), datasets: [{ label: 'NS %', data: top.map(x=>x.ns.toFixed(1)), backgroundColor: '#003366' }] },
-            options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { max: 100 } } }
         });
     }
 
@@ -234,60 +227,41 @@
         reader.onload = async (evt) => {
             const wb = XLSX.read(new Uint8Array(evt.target.result), { type: 'array' });
             const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-            document.getElementById('progress-container').style.display = 'block';
             const pBar = document.getElementById('progress-bar');
-            let batch = writeBatch(db);
+            document.getElementById('progress-container').style.display = 'block';
             
+            let batch = writeBatch(db);
+            let localBuffer = [];
+
             for (let i = 0; i < json.length; i++) {
                 const r = json[i];
+                const toM = (v) => { if(!v) return null; if(typeof v === 'number') return v * 1440; const p = String(v).split(':'); return parseInt(p[0])*60 + parseInt(p[1]||0); };
                 
-                const toM = (v) => { 
-                    if(!v || v === "null") return null;
-                    if(typeof v === 'number') return v * 1440;
-                    const p = String(v).split(':'); 
-                    return parseInt(p[0])*60 + parseInt(p[1]||0); 
-                };
-
-                // CRITERIOS DE TU EXCEL EMPATADOS:
-                const status = parseInt(r['status']);
-                const tipoViaje = r['Tipo de Viaje']; // N o V
-                const shift = r['shift'];
-                const recordQuality = r['record_quality'];
-
-                // 1. TIPO / ESTADO = Status 6,7,8 + Tipo N o V
-                const tipoEstado = ([6,7,8].includes(status) && ["N","V"].includes(tipoViaje)) ? 1 : 0;
+                const tipoEstado = ([6,7,8].includes(parseInt(r['status'])) && ["N","V"].includes(r['Tipo de Viaje'])) ? 1 : 0;
+                const retrasoValido = (r['shift'] === "IN" && r['record_quality'] == 1 && tipoEstado == 1) ? 1 : 0;
+                const noInfo = !r['end_eta'];
                 
-                // 2. RETRASO VALIDO = Shift IN + Record Quality 1 + Tipo Estado 1
-                const retrasoValido = (shift === "IN" && recordQuality == 1 && tipoEstado == 1) ? 1 : 0;
-                
-                const noInfo = !r['end_eta'] || r['end_eta'] === "";
-                const etaM = toM(r['end_eta']);
-                const timeM = toM(r['end_time']);
-                
-                // 3. DIF LLEGADA
-                const latL = (noInfo || etaM === null) ? 999 : Math.round(etaM - timeM);
-                const latI = (noInfo) ? 0 : Math.round(toM(r['start_eta']) - toM(r['start_time']));
-
-                // 4. VAL RET = Retraso Válido + Diferencia entre 4 y 1300
-                const valRet = (retrasoValido === 1) ? true : false;
-
-                const docData = {
+                const dObj = {
                     bu: r['business_unit'] || 'N/A',
                     grp: r['group'] || r['Cliente'] || 'N/A',
-                    des: r['des'] || 'S/N',
                     sem: parseInt(r['Sem Via'] || r['Semana'] || 0),
                     mes: parseInt(r['Mes'] || 1),
-                    latL, latI, noInfo, valRet,
-                    id: r['id'] || i
+                    latL: noInfo ? 999 : Math.round(toM(r['end_eta']) - toM(r['end_time'])),
+                    latI: noInfo ? 0 : Math.round(toM(r['start_eta']) - toM(r['start_time'])),
+                    noInfo, valRet: (retrasoValido === 1)
                 };
 
-                batch.set(doc(db, "servicios_settepi", `ID-${i}-${Date.now()}`), docData);
+                localBuffer.push(dObj);
+                batch.set(doc(collection(db, "servicios_settepi")), dObj);
+
                 if (i % 400 === 0 || i === json.length - 1) {
-                    await batch.commit();
+                    try { await batch.commit(); } catch(err) { console.error("Quota Exceeded on Write"); }
                     batch = writeBatch(db);
                     pBar.style.width = ((i / json.length) * 100) + '%';
                 }
             }
+            // Actualizar caché local inmediatamente
+            localStorage.setItem('settepi_cache', JSON.stringify(localBuffer));
             location.reload();
         };
         reader.readAsArrayBuffer(file);
