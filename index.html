@@ -65,7 +65,10 @@
         <select id="sel-sem" onchange="procesarYRenderizar()"></select>
         <select id="sel-cliente" onchange="procesarYRenderizar()"></select>
     </div>
-
+    <div id="progress-container" style="display:none; background: #eee; height: 20px; width: 100%;">
+    <div id="progress-bar" style="background: var(--verde-ok); height: 100%; width: 0%; transition: width 0.2s; color: white; text-align: center; font-size: 12px; line-height: 20px;">0%</div>
+</div>
+<div id="progress-text" style="display:none; text-align: center; font-size: 13px; margin-top: 5px; font-weight: bold;">Subiendo viajes...</div>
     <div class="container">
         <div class="kpi-row">
             <div class="kpi-card"><span>Nivel de Servicio</span><h2 id="k-ns">0%</h2></div>
